@@ -17,8 +17,9 @@ public class Platform extends JFrame {
     private JPanel groupListPanel;
     private List<Task> tasks = new ArrayList<>();
     private Map<String, Group> groups = new HashMap<>();
-    private Map<String, List<String>> studyPlans = new HashMap<>();
+    private Map<String, List<StudyPlan>> studyPlans = new HashMap<>();
     private String[] taskTypes = { "Assignment", "Project", "Homework" };
+    private String[] statusTypes = { "Not Started", "In Progress", "Completed" };
 
     public Platform() {
         setTitle("Study Management Platform");
@@ -157,7 +158,7 @@ public class Platform extends JFrame {
         JComboBox<String> typeComboBox = new JComboBox<>(taskTypes);
         typeComboBox.setSelectedItem(task.getType());
         JTextField dueDateField = new JTextField(task.getDueDate());
-        JComboBox<String> statusComboBox = new JComboBox<>(new String[] { "Incomplete", "Complete" });
+        JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
 
         // Create a panel to hold the input fields
         JPanel editPanel = new JPanel(new GridLayout(5, 2));
@@ -505,12 +506,47 @@ public class Platform extends JFrame {
         addStudyPlanButton.addActionListener(e -> {
             String selectedCourse = courseList.getSelectedValue();
             if (selectedCourse != null) {
-                String studyPlan = JOptionPane.showInputDialog(this, "Enter study plan:");
-                if (studyPlan != null && !studyPlan.trim().isEmpty()) {
-                    studyPlans.computeIfAbsent(selectedCourse, k -> new ArrayList<>()).add(studyPlan);
-                    studyPlanListModel.addElement(studyPlan);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Study plan cannot be empty.");
+                JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+                JTextField courseworkField = new JTextField();
+                JTextField detailsField = new JTextField();
+                JTextField dueDateField = new JTextField();
+                JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
+
+                inputPanel.add(new JLabel("Coursework:"));
+                inputPanel.add(courseworkField);
+                inputPanel.add(new JLabel("Details:"));
+                inputPanel.add(detailsField);
+                inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
+                inputPanel.add(dueDateField);
+                inputPanel.add(new JLabel("Status:"));
+                inputPanel.add(statusComboBox);
+
+                int result = JOptionPane.showConfirmDialog(
+                        this, inputPanel, "Add Study Plan", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        Date dueDate = null;
+                        if (!dueDateField.getText().trim().isEmpty()) {
+                            dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
+                        }
+
+                        String coursework = courseworkField.getText().trim();
+                        String details = detailsField.getText().trim();
+                        String status = (String) statusComboBox.getSelectedItem();
+
+                        if (coursework.isEmpty() || details.isEmpty()) {
+                            JOptionPane.showMessageDialog(this, "Coursework and details cannot be empty.");
+                            return;
+                        }
+
+                        StudyPlan studyPlan = new StudyPlan(selectedCourse, coursework, details, dueDate, status);
+                        studyPlans.computeIfAbsent(selectedCourse, k -> new ArrayList<>()).add(studyPlan);
+                        studyPlanListModel.addElement(studyPlan.getDetails()); // Add details to the UI list
+
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+                    }
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No course selected.");
@@ -519,9 +555,16 @@ public class Platform extends JFrame {
 
         JButton viewStudyPlanButton = new JButton("View Study Plan");
         viewStudyPlanButton.addActionListener(e -> {
-            String selectedStudyPlan = studyPlanList.getSelectedValue();
-            if (selectedStudyPlan != null) {
-                JOptionPane.showMessageDialog(this, "Study Plan:\n" + selectedStudyPlan);
+            String selectedCourse = courseList.getSelectedValue();
+            String selectedStudyPlanDetails = studyPlanList.getSelectedValue();
+            if (selectedCourse != null && selectedStudyPlanDetails != null) {
+                StudyPlan selectedStudyPlan = studyPlans.get(selectedCourse).stream()
+                        .filter(sp -> sp.getDetails().equals(selectedStudyPlanDetails))
+                        .findFirst()
+                        .orElse(null);
+                if (selectedStudyPlan != null) {
+                    JOptionPane.showMessageDialog(this, selectedStudyPlan.toString());
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "No study plan selected.");
             }
@@ -530,10 +573,19 @@ public class Platform extends JFrame {
         JButton deleteStudyPlanButton = new JButton("Delete Study Plan");
         deleteStudyPlanButton.addActionListener(e -> {
             String selectedCourse = courseList.getSelectedValue();
-            String selectedStudyPlan = studyPlanList.getSelectedValue();
-            if (selectedCourse != null && selectedStudyPlan != null) {
-                studyPlans.getOrDefault(selectedCourse, new ArrayList<>()).remove(selectedStudyPlan);
-                studyPlanListModel.removeElement(selectedStudyPlan);
+            String selectedStudyPlanDetails = studyPlanList.getSelectedValue();
+
+            if (selectedCourse != null && selectedStudyPlanDetails != null) {
+                // Find and remove the selected StudyPlan object
+                List<StudyPlan> plans = studyPlans.get(selectedCourse);
+                if (plans != null) {
+                    plans.removeIf(sp -> sp.getDetails().equals(selectedStudyPlanDetails));
+                }
+
+                // Remove the study plan from the UI list
+                studyPlanListModel.removeElement(selectedStudyPlanDetails);
+
+                JOptionPane.showMessageDialog(this, "Study plan deleted successfully.");
             } else {
                 JOptionPane.showMessageDialog(this, "No study plan or course selected.");
             }
@@ -551,8 +603,8 @@ public class Platform extends JFrame {
                 String selectedCourse = courseList.getSelectedValue();
                 studyPlanListModel.clear();
                 if (selectedCourse != null && studyPlans.containsKey(selectedCourse)) {
-                    for (String plan : studyPlans.get(selectedCourse)) {
-                        studyPlanListModel.addElement(plan);
+                    for (StudyPlan sp : studyPlans.get(selectedCourse)) {
+                        studyPlanListModel.addElement(sp.getDetails()); // Add only the details to the list
                     }
                 }
             }

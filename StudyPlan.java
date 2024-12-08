@@ -6,13 +6,14 @@ public class StudyPlan {
     private String coursework;
     private String details;   // The details of the study plan
     private Date dueDate;     // Optional: due date for the study plan
-    private String priority;  // Optional: priority level (e.g., High, Medium, Low)
+    private String status;  // Optional: priority level (e.g., High, Medium, Low)
 
-    public StudyPlan(String courseName, String details, Date dueDate, String priority) {
+    public StudyPlan(String courseName, String coursework, String details, Date dueDate, String status) {
         this.courseName = courseName;
+        this.coursework = coursework;
         this.details = details;
         this.dueDate = dueDate;
-        this.priority = priority;
+        this.status = status;
     }
 
     public String getCourseName() {
@@ -21,6 +22,14 @@ public class StudyPlan {
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
+    }
+
+    public String getCoursework() {
+        return coursework;
+    }
+
+    public void setCoursework(String coursework) {
+        this.coursework = coursework;
     }
 
     public String getDetails() {
@@ -39,12 +48,12 @@ public class StudyPlan {
         this.dueDate = dueDate;
     }
 
-    public String getPriority() {
-        return priority;
+    public String getStatus() {
+        return status;
     }
 
-    public void setPriority(String priority) {
-        this.priority = priority;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override
@@ -55,8 +64,8 @@ public class StudyPlan {
         if (dueDate != null) {
             sb.append("\nDue Date: ").append(new SimpleDateFormat("MM-dd-yyyy").format(dueDate));
         }
-        if (priority != null) {
-            sb.append("\nPriority: ").append(priority);
+        if (status != null) {
+            sb.append("\nStatus: ").append(status);
         }
         return sb.toString();
     }
