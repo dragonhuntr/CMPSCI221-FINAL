@@ -1,35 +1,36 @@
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.text.SimpleDateFormat;
 
 public class StudyPlan {
-    private String courseName; // The course associated with the study plan
-    private String coursework;
-    private String details;   // The details of the study plan
-    private Date dueDate;     // Optional: due date for the study plan
-    private String status;  // Optional: priority level (e.g., High, Medium, Low)
+    private String courseName;
+    private String name; // Study plan name
+    private List<Coursework> courseworkList; // List of coursework items
+    private String details;
+    private Date dueDate;
+    private String status;
 
-    public StudyPlan(String courseName, String coursework, String details, Date dueDate, String status) {
+    public StudyPlan(String courseName, String name) {
         this.courseName = courseName;
-        this.coursework = coursework;
-        this.details = details;
-        this.dueDate = dueDate;
-        this.status = status;
+        this.name = name;
+        this.courseworkList = new ArrayList<>();
     }
 
     public String getCourseName() {
         return courseName;
     }
 
-    public void setCourseName(String courseName) {
-        this.courseName = courseName;
+    public String getName() {
+        return name;
     }
 
-    public String getCoursework() {
-        return coursework;
+    public List<Coursework> getCourseworkList() {
+        return courseworkList;
     }
 
-    public void setCoursework(String coursework) {
-        this.coursework = coursework;
+    public void addCoursework(Coursework coursework) {
+        courseworkList.add(coursework);
     }
 
     public String getDetails() {
@@ -60,13 +61,18 @@ public class StudyPlan {
     public String toString() {
         StringBuilder sb = new StringBuilder("Study Plan Details:");
         sb.append("\nCourse Name: ").append(courseName);
-        sb.append("\nDetails: ").append(details);
-        if (dueDate != null) {
-            sb.append("\nDue Date: ").append(new SimpleDateFormat("MM-dd-yyyy").format(dueDate));
+        sb.append("\nStudy Plan Name: ").append(name);
+        sb.append("\nDetails: ").append(details == null ? "Not set" : details);
+        sb.append("\nCoursework:");
+        if (courseworkList.isEmpty()) {
+            sb.append(" None");
+        } else {
+            for (Coursework cw : courseworkList) {
+                sb.append("\n- ").append(cw.getName());
+            }
         }
-        if (status != null) {
-            sb.append("\nStatus: ").append(status);
-        }
+        sb.append("\nDue Date: ").append(dueDate == null ? "Not set" : new SimpleDateFormat("MM-dd-yyyy").format(dueDate));
+        sb.append("\nStatus: ").append(status == null ? "Not set" : status);
         return sb.toString();
     }
 }

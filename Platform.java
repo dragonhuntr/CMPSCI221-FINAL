@@ -46,6 +46,14 @@ public class Platform extends JFrame {
         JPanel studyPlanPanel = createStudyPlanPanel();
         tabbedPane.addTab("Study Plans", studyPlanPanel);
 
+        // Tutoring Tab
+        JPanel tutoringPanel = createStudyPlanPanel();
+        tabbedPane.addTab("Tutoring", tutoringPanel);
+
+        // Notification Tab
+        JPanel notificationPanel = createStudyPlanPanel();
+        tabbedPane.addTab("Notifications", notificationPanel);
+
         // Add tabbedPane to frame
         getContentPane().add(tabbedPane);
     }
@@ -94,7 +102,6 @@ public class Platform extends JFrame {
 
         taskDueDateField = new JTextField(10);
         taskDueDateField.setToolTipText("MM-dd-yyyy");
-        taskDueDateField.setText("04-04-2004");
         gbc.gridx = 1;
         formPanel.add(taskDueDateField, gbc);
 
@@ -506,47 +513,13 @@ public class Platform extends JFrame {
         addStudyPlanButton.addActionListener(e -> {
             String selectedCourse = courseList.getSelectedValue();
             if (selectedCourse != null) {
-                JPanel inputPanel = new JPanel(new GridLayout(4, 2));
-                JTextField courseworkField = new JTextField();
-                JTextField detailsField = new JTextField();
-                JTextField dueDateField = new JTextField();
-                JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
-
-                inputPanel.add(new JLabel("Coursework:"));
-                inputPanel.add(courseworkField);
-                inputPanel.add(new JLabel("Details:"));
-                inputPanel.add(detailsField);
-                inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
-                inputPanel.add(dueDateField);
-                inputPanel.add(new JLabel("Status:"));
-                inputPanel.add(statusComboBox);
-
-                int result = JOptionPane.showConfirmDialog(
-                        this, inputPanel, "Add Study Plan", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (result == JOptionPane.OK_OPTION) {
-                    try {
-                        Date dueDate = null;
-                        if (!dueDateField.getText().trim().isEmpty()) {
-                            dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
-                        }
-
-                        String coursework = courseworkField.getText().trim();
-                        String details = detailsField.getText().trim();
-                        String status = (String) statusComboBox.getSelectedItem();
-
-                        if (coursework.isEmpty() || details.isEmpty()) {
-                            JOptionPane.showMessageDialog(this, "Coursework and details cannot be empty.");
-                            return;
-                        }
-
-                        StudyPlan studyPlan = new StudyPlan(selectedCourse, coursework, details, dueDate, status);
-                        studyPlans.computeIfAbsent(selectedCourse, k -> new ArrayList<>()).add(studyPlan);
-                        studyPlanListModel.addElement(studyPlan.getDetails()); // Add details to the UI list
-
-                    } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
-                    }
+                String studyPlanName = JOptionPane.showInputDialog(this, "Enter study plan name:");
+                if (studyPlanName != null && !studyPlanName.trim().isEmpty()) {
+                    StudyPlan studyPlan = new StudyPlan(selectedCourse, studyPlanName);
+                    studyPlans.computeIfAbsent(selectedCourse, k -> new ArrayList<>()).add(studyPlan);
+                    studyPlanListModel.addElement(studyPlan.getName());
+                } else {
+                    JOptionPane.showMessageDialog(this, "Study plan name cannot be empty.");
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No course selected.");
@@ -556,14 +529,162 @@ public class Platform extends JFrame {
         JButton viewStudyPlanButton = new JButton("View Study Plan");
         viewStudyPlanButton.addActionListener(e -> {
             String selectedCourse = courseList.getSelectedValue();
-            String selectedStudyPlanDetails = studyPlanList.getSelectedValue();
-            if (selectedCourse != null && selectedStudyPlanDetails != null) {
+            String selectedStudyPlanName = studyPlanList.getSelectedValue();
+            if (selectedCourse != null && selectedStudyPlanName != null) {
                 StudyPlan selectedStudyPlan = studyPlans.get(selectedCourse).stream()
-                        .filter(sp -> sp.getDetails().equals(selectedStudyPlanDetails))
+                        .filter(sp -> sp.getName().equals(selectedStudyPlanName))
                         .findFirst()
                         .orElse(null);
                 if (selectedStudyPlan != null) {
-                    JOptionPane.showMessageDialog(this, selectedStudyPlan.toString());
+                    // Table for coursework details
+                    String[] columnNames = { "Name", "Details", "Due Date", "Status" };
+                    List<Coursework> studyPlanCoursework = selectedStudyPlan.getCourseworkList();
+                    String[][] tableData = new String[studyPlanCoursework.size()][4];
+
+                    for (int i = 0; i < studyPlanCoursework.size(); i++) {
+                        Coursework cw = studyPlanCoursework.get(i);
+                        tableData[i][0] = cw.getName();
+                        tableData[i][1] = cw.getDetails() == null ? "Not set" : cw.getDetails();
+                        tableData[i][2] = cw.getDueDate() == null ? "Not set"
+                                : new SimpleDateFormat("MM-dd-yyyy").format(cw.getDueDate());
+                        tableData[i][3] = cw.getStatus() == null ? "Not set" : cw.getStatus();
+                    }
+
+                    JTable courseworkTable = new JTable(tableData, columnNames);
+                    courseworkTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+                    // Coursework Management Buttons
+                    JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
+                    JButton addCourseworkButton = new JButton("Add Coursework");
+                    JButton editCourseworkButton = new JButton("Edit Coursework");
+                    JButton deleteCourseworkButton = new JButton("Delete Coursework");
+
+                    // Add Coursework
+                    addCourseworkButton.addActionListener(ae -> {
+                        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+                        JTextField nameField = new JTextField();
+                        JTextField detailsField = new JTextField();
+                        JTextField dueDateField = new JTextField();
+                        JComboBox<String> statusComboBox = new JComboBox<>(
+                                new String[] { "Not Started", "In Progress", "Completed" });
+
+                        inputPanel.add(new JLabel("Name:"));
+                        inputPanel.add(nameField);
+                        inputPanel.add(new JLabel("Details:"));
+                        inputPanel.add(detailsField);
+                        inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
+                        inputPanel.add(dueDateField);
+                        inputPanel.add(new JLabel("Status:"));
+                        inputPanel.add(statusComboBox);
+
+                        int result = JOptionPane.showConfirmDialog(
+                                this, inputPanel, "Add Coursework", JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.PLAIN_MESSAGE);
+
+                        if (result == JOptionPane.OK_OPTION) {
+                            try {
+                                Date dueDate = null;
+                                if (!dueDateField.getText().trim().isEmpty()) {
+                                    dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
+                                }
+
+                                String name = nameField.getText().trim();
+                                String details = detailsField.getText().trim();
+                                String status = (String) statusComboBox.getSelectedItem();
+
+                                if (name.isEmpty()) {
+                                    JOptionPane.showMessageDialog(this, "Coursework name cannot be empty.");
+                                    return;
+                                }
+
+                                Coursework coursework = new Coursework(name, details, dueDate, status);
+                                selectedStudyPlan.addCoursework(coursework);
+
+                                // Refresh table
+                                refreshCourseworkTable(selectedStudyPlan, courseworkTable);
+                            } catch (ParseException ex) {
+                                JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+                            }
+                        }
+                    });
+
+                    // Edit Coursework
+                    editCourseworkButton.addActionListener(ae -> {
+                        int selectedRow = courseworkTable.getSelectedRow();
+                        if (selectedRow >= 0) {
+                            Coursework selectedCoursework = studyPlanCoursework.get(selectedRow);
+
+                            JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+                            JTextField nameField = new JTextField(selectedCoursework.getName());
+                            JTextField detailsField = new JTextField(selectedCoursework.getDetails());
+                            JTextField dueDateField = new JTextField(selectedCoursework.getDueDate() != null
+                                    ? new SimpleDateFormat("MM-dd-yyyy").format(selectedCoursework.getDueDate())
+                                    : "");
+                            JComboBox<String> statusComboBox = new JComboBox<>(
+                                    new String[] { "Not Started", "In Progress", "Completed" });
+                            statusComboBox.setSelectedItem(selectedCoursework.getStatus());
+
+                            inputPanel.add(new JLabel("Name:"));
+                            inputPanel.add(nameField);
+                            inputPanel.add(new JLabel("Details:"));
+                            inputPanel.add(detailsField);
+                            inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
+                            inputPanel.add(dueDateField);
+                            inputPanel.add(new JLabel("Status:"));
+                            inputPanel.add(statusComboBox);
+
+                            int result = JOptionPane.showConfirmDialog(
+                                    this, inputPanel, "Edit Coursework", JOptionPane.OK_CANCEL_OPTION,
+                                    JOptionPane.PLAIN_MESSAGE);
+
+                            if (result == JOptionPane.OK_OPTION) {
+                                try {
+                                    Date dueDate = null;
+                                    if (!dueDateField.getText().trim().isEmpty()) {
+                                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
+                                    }
+
+                                    selectedCoursework.setName(nameField.getText().trim());
+                                    selectedCoursework.setDetails(detailsField.getText().trim());
+                                    selectedCoursework.setDueDate(dueDate);
+                                    selectedCoursework.setStatus((String) statusComboBox.getSelectedItem());
+
+                                    // Refresh table
+                                    refreshCourseworkTable(selectedStudyPlan, courseworkTable);
+                                } catch (ParseException ex) {
+                                    JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+                                }
+                            }
+                        } else {
+                            JOptionPane.showMessageDialog(this, "No coursework selected.");
+                        }
+                    });
+
+                    // Delete Coursework
+                    deleteCourseworkButton.addActionListener(ae -> {
+                        int selectedRow = courseworkTable.getSelectedRow();
+                        if (selectedRow >= 0) {
+                            studyPlanCoursework.remove(selectedRow);
+
+                            // Refresh table
+                            refreshCourseworkTable(selectedStudyPlan, courseworkTable);
+                            JOptionPane.showMessageDialog(this, "Coursework deleted successfully.");
+                        } else {
+                            JOptionPane.showMessageDialog(this, "No coursework selected.");
+                        }
+                    });
+
+                    buttonPanel.add(addCourseworkButton);
+                    buttonPanel.add(editCourseworkButton);
+                    buttonPanel.add(deleteCourseworkButton);
+
+                    // Display table and buttons in a dialog
+                    JPanel courseworkPanel = new JPanel(new BorderLayout());
+                    courseworkPanel.add(new JScrollPane(courseworkTable), BorderLayout.CENTER);
+                    courseworkPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+                    JOptionPane.showMessageDialog(this, courseworkPanel, "Manage Coursework for Study Plan",
+                            JOptionPane.PLAIN_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No study plan selected.");
@@ -573,18 +694,14 @@ public class Platform extends JFrame {
         JButton deleteStudyPlanButton = new JButton("Delete Study Plan");
         deleteStudyPlanButton.addActionListener(e -> {
             String selectedCourse = courseList.getSelectedValue();
-            String selectedStudyPlanDetails = studyPlanList.getSelectedValue();
+            String selectedStudyPlanName = studyPlanList.getSelectedValue();
 
-            if (selectedCourse != null && selectedStudyPlanDetails != null) {
-                // Find and remove the selected StudyPlan object
+            if (selectedCourse != null && selectedStudyPlanName != null) {
                 List<StudyPlan> plans = studyPlans.get(selectedCourse);
                 if (plans != null) {
-                    plans.removeIf(sp -> sp.getDetails().equals(selectedStudyPlanDetails));
+                    plans.removeIf(sp -> sp.getName().equals(selectedStudyPlanName));
                 }
-
-                // Remove the study plan from the UI list
-                studyPlanListModel.removeElement(selectedStudyPlanDetails);
-
+                studyPlanListModel.removeElement(selectedStudyPlanName);
                 JOptionPane.showMessageDialog(this, "Study plan deleted successfully.");
             } else {
                 JOptionPane.showMessageDialog(this, "No study plan or course selected.");
@@ -616,6 +733,23 @@ public class Platform extends JFrame {
 
         panel.add(splitPane, BorderLayout.CENTER);
         return panel;
+    }
+
+    private void refreshCourseworkTable(StudyPlan studyPlan, JTable courseworkTable) {
+        List<Coursework> studyPlanCoursework = studyPlan.getCourseworkList();
+        String[][] tableData = new String[studyPlanCoursework.size()][4];
+
+        for (int i = 0; i < studyPlanCoursework.size(); i++) {
+            Coursework cw = studyPlanCoursework.get(i);
+            tableData[i][0] = cw.getName();
+            tableData[i][1] = cw.getDetails() == null ? "Not set" : cw.getDetails();
+            tableData[i][2] = cw.getDueDate() == null ? "Not set"
+                    : new SimpleDateFormat("MM-dd-yyyy").format(cw.getDueDate());
+            tableData[i][3] = cw.getStatus() == null ? "Not set" : cw.getStatus();
+        }
+
+        courseworkTable.setModel(
+                new javax.swing.table.DefaultTableModel(tableData, new String[] { "Name", "Details", "Due Date", "Status" }));
     }
 
     public static void main(String[] args) {
