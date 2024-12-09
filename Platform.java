@@ -18,9 +18,13 @@ public class Platform extends JFrame {
     private DefaultTableModel taskTableModel;
     private JTable taskTable;
     private JPanel groupListPanel;
+    private JComboBox<String> classDropdown;
+    private DefaultTableModel sessionTableModel;
+    private JTable sessionTable;
     private List<Task> tasks = new ArrayList<>();
     private Map<String, Group> groups = new HashMap<>();
     private Map<String, List<StudyPlan>> studyPlans = new HashMap<>();
+    private List<Tutor> tutors = new ArrayList<>();
     private String[] taskTypes = { "Assignment", "Project", "Homework" };
     private String[] statusTypes = { "Not Started", "In Progress", "Completed" };
 
@@ -49,8 +53,9 @@ public class Platform extends JFrame {
         tabbedPane.addTab("Study Plans", studyPlanPanel);
 
         // Tutoring Tab
-        JPanel tutoringPanel = createStudyPlanPanel();
+        JPanel tutoringPanel = createTutoringPanel();
         tabbedPane.addTab("Tutoring", tutoringPanel);
+        populateTutors();
 
         // Notification Tab
         JPanel notificationPanel = createStudyPlanPanel();
@@ -749,6 +754,98 @@ public class Platform extends JFrame {
         courseworkTable.setModel(
                 new javax.swing.table.DefaultTableModel(tableData,
                         new String[] { "Name", "Details", "Due Date", "Status" }));
+    }
+
+    private JPanel createTutoringPanel() {
+        JPanel tutoringPanel = new JPanel(new BorderLayout());
+
+        // Top Panel: Dropdown for classes
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        classDropdown = new JComboBox<>();
+        classDropdown.addItem("Select a Class"); // Default option
+        classDropdown.addActionListener(e -> updateSessionTable());
+        topPanel.add(new JLabel("Class:"));
+        topPanel.add(classDropdown);
+
+        // Bottom Panel: Table for sessions
+        sessionTableModel = new DefaultTableModel(new String[] { "Name", "Available Date", "Location", "Scheduled", "Schedule Date" }, 0);
+        sessionTable = new JTable(sessionTableModel);
+        JScrollPane tableScrollPane = new JScrollPane(sessionTable);
+
+        // Button to schedule session
+        JButton scheduleButton = new JButton("Schedule Session");
+        scheduleButton.addActionListener(e -> scheduleSession());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(scheduleButton);
+
+        tutoringPanel.add(topPanel, BorderLayout.NORTH);
+        tutoringPanel.add(tableScrollPane, BorderLayout.CENTER);
+        tutoringPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return tutoringPanel;
+    }
+
+    private void populateTutors() {
+        tutors.add(new Tutor("Tutor A", "Math", "12-10-2024", "Room 101", false, ""));
+        tutors.add(new Tutor("Tutor B", "Science", "12-11-2024", "Room 202", false, ""));
+        tutors.add(new Tutor("Tutor C", "Math", "12-12-2024", "Room 101", false, ""));
+        tutors.add(new Tutor("Tutor D", "English", "12-13-2024", "Room 303", false, ""));
+
+        // Populate the dropdown with unique classes
+        tutors.stream()
+              .map(Tutor::getTutorClass)
+              .distinct()
+              .forEach(classDropdown::addItem);
+    }
+
+    private void updateSessionTable() {
+        String selectedClass = (String) classDropdown.getSelectedItem();
+        if (selectedClass == null || selectedClass.equals("Select a Class")) {
+            sessionTableModel.setRowCount(0); // Clear table
+            return;
+        }
+
+        sessionTableModel.setRowCount(0); // Clear existing rows
+
+        for (Tutor tutor : tutors) {
+            if (tutor.getTutorClass().equals(selectedClass)) {
+                sessionTableModel.addRow(new Object[] {
+                    tutor.getName(),
+                    tutor.getAvailableDate(),
+                    tutor.getLocation(),
+                    tutor.isScheduled() ? "Yes" : "No",
+                    tutor.getScheduleDate().isEmpty() ? "Not Scheduled" : tutor.getScheduleDate()
+                });
+            }
+        }
+    }
+
+    private void scheduleSession() {
+        int selectedRow = sessionTable.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "No session selected.");
+            return;
+        }
+
+        String tutorName = (String) sessionTableModel.getValueAt(selectedRow, 0);
+
+        for (Tutor tutor : tutors) {
+            if (tutor.getName().equals(tutorName)) {
+                if (tutor.isScheduled()) {
+                    JOptionPane.showMessageDialog(this, "This session is already scheduled.");
+                    return;
+                }
+
+                String scheduleDate = JOptionPane.showInputDialog(this, "Enter Schedule Date (MM-dd-yyyy):");
+                if (scheduleDate != null && !scheduleDate.trim().isEmpty()) {
+                    tutor.setScheduled(true);
+                    tutor.setScheduleDate(scheduleDate);
+                    updateSessionTable();
+                    JOptionPane.showMessageDialog(this, "Session scheduled successfully.");
+                }
+                return;
+            }
+        }
     }
 
     public static void main(String[] args) {
