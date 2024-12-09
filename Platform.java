@@ -35,33 +35,33 @@ public class Platform extends JFrame {
         setTitle("Study Management Platform");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
-    
+
         // Create tabs
         tabbedPane = new JTabbedPane();
-    
+
         JPanel taskPanel = createTaskPanel();
         tabbedPane.addTab("Task Manager", taskPanel);
-    
+
         JPanel taskListTab = createTaskListTab();
         tabbedPane.addTab("Task List", taskListTab);
-    
+
         JPanel groupPanel = createGroupPanel();
         tabbedPane.addTab("Group Management", groupPanel);
-    
+
         JPanel studyPlanPanel = createStudyPlanPanel();
         tabbedPane.addTab("Study Plans", studyPlanPanel);
-    
+
         JPanel tutoringPanel = createTutoringPanel();
         tabbedPane.addTab("Tutoring", tutoringPanel);
-    
+
         JPanel notificationPanel = createNotificationsTab();
         tabbedPane.addTab("Notifications", notificationPanel);
-    
+
         populateTutors();
         getContentPane().add(tabbedPane);
         startNotificationChecker();
     }
-    
+
     private JPanel createTaskPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Task Management"));
@@ -914,38 +914,38 @@ public class Platform extends JFrame {
 
     private JPanel createNotificationsTab() {
         JPanel notificationPanel = new JPanel(new BorderLayout());
-    
+
         // Notifications Table
         notificationTableModel = new DefaultTableModel(new String[] { "Date", "Content", "Read" }, 0);
-    
+
         // Populate table with existing notifications
         for (Notification notification : notifications) {
             notificationTableModel.addRow(new Object[] {
-                new SimpleDateFormat("MM-dd-yyyy").format(notification.getSentDate()),
-                notification.getContent(),
-                notification.isRead() ? "Yes" : "No"
+                    new SimpleDateFormat("MM-dd-yyyy").format(notification.getSentDate()),
+                    notification.getContent(),
+                    notification.isRead() ? "Yes" : "No"
             });
         }
-    
+
         JTable notificationTable = new JTable(notificationTableModel);
         notificationTable.getColumnModel().getColumn(2).setPreferredWidth(50);
         JScrollPane tableScrollPane = new JScrollPane(notificationTable);
-    
+
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    
+
         JButton deleteNotificationButton = new JButton("Delete Notification");
         deleteNotificationButton.addActionListener(e -> deleteSelectedNotification(notificationTable));
-    
+
         JButton markAllReadButton = new JButton("Mark All as Read");
         markAllReadButton.addActionListener(e -> markAllNotificationsAsRead());
-    
+
         buttonPanel.add(deleteNotificationButton);
         buttonPanel.add(markAllReadButton);
-    
+
         notificationPanel.add(tableScrollPane, BorderLayout.CENTER);
         notificationPanel.add(buttonPanel, BorderLayout.SOUTH);
-    
+
         return notificationPanel;
     }
 
@@ -980,13 +980,16 @@ public class Platform extends JFrame {
     }
 
     private void addNotification(String content) {
-        // Check if a notification with the same content and today's date already exists
+        // Get the current date formatted as MM-dd-yyyy
         Date currentDate = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-        boolean exists = notifications.stream().anyMatch(notification ->
-            notification.getContent().equals(content) &&
-            sdf.format(notification.getSentDate()).equals(sdf.format(currentDate))
-        );
+        String currentDateString = sdf.format(currentDate);
+    
+        // Check if a notification with the same content and date already exists, regardless of deletion state
+        boolean exists = notifications.stream()
+                .anyMatch(notification -> notification.getContent().equals(content) &&
+                        sdf.format(notification.getSentDate()).equals(currentDateString) &&
+                        !notification.isDeleted());
     
         if (exists) {
             // If a duplicate notification exists, skip adding
@@ -999,17 +1002,17 @@ public class Platform extends JFrame {
     
         // Add the notification to the table model
         notificationTableModel.addRow(new Object[] {
-            sdf.format(notification.getSentDate()),
-            notification.getContent(),
-            notification.isRead() ? "Yes" : "No"
+                currentDateString,
+                notification.getContent(),
+                notification.isRead() ? "Yes" : "No"
         });
     
         // Update the tab title
         updateNotificationsTab();
     }
-
+    
     private void updateNotificationsTab() {
-        // Iterate over all tabs to find the one that starts with "Notifications"
+        // Find the Notifications tab index
         int notificationsTabIndex = -1;
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
             String tabTitle = tabbedPane.getTitleAt(i);
@@ -1021,32 +1024,56 @@ public class Platform extends JFrame {
     
         // Ensure the tab exists
         if (notificationsTabIndex != -1) {
-            int unreadCount = (int) notifications.stream().filter(notification -> !notification.isRead()).count();
+            // Count unread notifications that are not deleted
+            long unreadCount = notifications.stream()
+                    .filter(notification -> !notification.isRead() && !notification.isDeleted())
+                    .count();
     
             // Update the tab title to show unread notifications count
             String newTitle = unreadCount > 0 ? "Notifications (" + unreadCount + ")" : "Notifications";
             tabbedPane.setTitleAt(notificationsTabIndex, newTitle);
         } else {
-            // Handle the case where the Notifications tab is not found
+            // Log an error if the Notifications tab is not found
             System.err.println("Notifications tab not found in JTabbedPane.");
         }
     }
-
+    
+    
     private void deleteSelectedNotification(JTable notificationTable) {
         int selectedRow = notificationTable.getSelectedRow();
         if (selectedRow >= 0) {
-            notifications.remove(selectedRow);
-            notificationTableModel.removeRow(selectedRow); // Update table
+            // Mark the notification as deleted
+            notifications.get(selectedRow).markAsDeleted();
+    
+            // Remove the row from the table model
+            notificationTableModel.removeRow(selectedRow);
+    
+            // Update the notifications tab title to reflect the unread count
             updateNotificationsTab();
         } else {
             JOptionPane.showMessageDialog(this, "No notification selected.");
         }
-    }    
-
+    }
+    
     private void markAllNotificationsAsRead() {
         notifications.forEach(Notification::markAsRead);
         updateNotificationsTab();
+        refreshNotificationTable();
     }
+
+    private void refreshNotificationTable() {
+        notificationTableModel.setRowCount(0); // Clear the table model
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+    
+        // Re-populate the table with updated notifications
+        for (Notification notification : notifications) {
+            notificationTableModel.addRow(new Object[] {
+                sdf.format(notification.getSentDate()),
+                notification.getContent(),
+                notification.isRead() ? "Yes" : "No"
+            });
+        }
+    }    
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {

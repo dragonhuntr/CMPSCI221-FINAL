@@ -4,11 +4,13 @@ public class Notification {
     private Date sentDate;
     private String content;
     private boolean isRead;
+    private boolean isDeleted;
 
     public Notification(Date sentDate, String content) {
         this.sentDate = sentDate;
         this.content = content;
         this.isRead = false;
+        this.isDeleted = false;
     }
 
     public Date getSentDate() {
@@ -25,5 +27,13 @@ public class Notification {
 
     public void markAsRead() {
         this.isRead = true;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void markAsDeleted() {
+        this.isDeleted = true;
     }
 }
