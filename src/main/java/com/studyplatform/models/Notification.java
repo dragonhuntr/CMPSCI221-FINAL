@@ -3,10 +3,16 @@ package com.studyplatform.models;
 import java.util.Date;
 
 public class Notification {
+    private int id;
     private String title;
     private String description;
     private Date timestamp;
     private boolean isRead;
+
+    public Notification() {
+        this.timestamp = new Date();
+        this.isRead = false;
+    }
 
     public Notification(String title, String description) {
         this.title = title;
@@ -14,6 +20,9 @@ public class Notification {
         this.timestamp = new Date();
         this.isRead = false;
     }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

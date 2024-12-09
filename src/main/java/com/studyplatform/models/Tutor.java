@@ -1,11 +1,14 @@
 package com.studyplatform.models;
 
 public class Tutor {
+    private int id;
     private String name;
     private String tutorClass;
     private String availableDate;
     private String location;
     private boolean scheduled;
+
+    public Tutor() {}
 
     public Tutor(String name, String tutorClass, String availableDate, String location, boolean scheduled) {
         this.name = name;
@@ -14,6 +17,9 @@ public class Tutor {
         this.location = location;
         this.scheduled = scheduled;
     }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
