@@ -152,13 +152,13 @@ public class Platform extends JFrame {
         JTextField descriptionField = new JTextField(task.getDescription());
         JComboBox<String> typeComboBox = new JComboBox<>(taskTypes);
         typeComboBox.setSelectedItem(task.getType());
-        
+
         String dueDateString = task.getDueDate();
         JTextField dueDateField = new JTextField(dueDateString);
-        
+
         JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
         statusComboBox.setSelectedItem(task.getStatus());
-    
+
         // Create input panel
         JPanel editPanel = new JPanel(new GridLayout(5, 2));
         editPanel.add(new JLabel("Title:"));
@@ -171,10 +171,10 @@ public class Platform extends JFrame {
         editPanel.add(dueDateField);
         editPanel.add(new JLabel("Status:"));
         editPanel.add(statusComboBox);
-    
+
         int result = JOptionPane.showConfirmDialog(
                 this, editPanel, "Update Task", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-    
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 // Parse due date if not empty
@@ -182,28 +182,29 @@ public class Platform extends JFrame {
                 if (!dueDateField.getText().trim().isEmpty()) {
                     dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
                 }
-    
+
                 // Update task properties
                 task.setTitle(titleField.getText().trim());
                 task.setDescription(descriptionField.getText().trim());
                 task.setType((String) typeComboBox.getSelectedItem());
                 task.setDueDate(dueDate);
                 task.setStatus((String) statusComboBox.getSelectedItem());
-    
+
                 // Update table model
                 taskTableModel.setValueAt(task.getTitle(), rowIndex, 0);
                 taskTableModel.setValueAt(task.getDescription(), rowIndex, 1);
                 taskTableModel.setValueAt(task.getType(), rowIndex, 2);
-                taskTableModel.setValueAt(dueDate != null ? new SimpleDateFormat("MM-dd-yyyy").format(dueDate) : "Not set", rowIndex, 3);
+                taskTableModel.setValueAt(
+                        dueDate != null ? new SimpleDateFormat("MM-dd-yyyy").format(dueDate) : "Not set", rowIndex, 3);
                 taskTableModel.setValueAt(task.getStatus(), rowIndex, 4);
-    
+
                 JOptionPane.showMessageDialog(this, "Task updated successfully!");
             } catch (ParseException ex) {
                 JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
             }
         }
     }
-    
+
     private JPanel createTaskListTab() {
         // Panel to hold task table and buttons
         JPanel taskListPanel = new JPanel(new BorderLayout());
@@ -768,7 +769,8 @@ public class Platform extends JFrame {
         topPanel.add(classDropdown);
 
         // Bottom Panel: Table for sessions
-        sessionTableModel = new DefaultTableModel(new String[] { "Name", "Available Date", "Location", "Scheduled", "Schedule Date" }, 0);
+        sessionTableModel = new DefaultTableModel(new String[] { "Name", "Available Date", "Location", "Scheduled" },
+                0);
         sessionTable = new JTable(sessionTableModel);
         JScrollPane tableScrollPane = new JScrollPane(sessionTable);
 
@@ -786,16 +788,16 @@ public class Platform extends JFrame {
     }
 
     private void populateTutors() {
-        tutors.add(new Tutor("Tutor A", "Math", "12-10-2024", "Room 101", false, ""));
-        tutors.add(new Tutor("Tutor B", "Science", "12-11-2024", "Room 202", false, ""));
-        tutors.add(new Tutor("Tutor C", "Math", "12-12-2024", "Room 101", false, ""));
-        tutors.add(new Tutor("Tutor D", "English", "12-13-2024", "Room 303", false, ""));
+        tutors.add(new Tutor("Tutor A", "Math", "12-10-2024", "Room 101", false));
+        tutors.add(new Tutor("Tutor B", "Science", "12-11-2024", "Room 202", false));
+        tutors.add(new Tutor("Tutor C", "Math", "12-12-2024", "Room 101", false));
+        tutors.add(new Tutor("Tutor D", "English", "12-13-2024", "Room 303", false));
 
         // Populate the dropdown with unique classes
         tutors.stream()
-              .map(Tutor::getTutorClass)
-              .distinct()
-              .forEach(classDropdown::addItem);
+                .map(Tutor::getTutorClass)
+                .distinct()
+                .forEach(classDropdown::addItem);
     }
 
     private void updateSessionTable() {
@@ -810,11 +812,10 @@ public class Platform extends JFrame {
         for (Tutor tutor : tutors) {
             if (tutor.getTutorClass().equals(selectedClass)) {
                 sessionTableModel.addRow(new Object[] {
-                    tutor.getName(),
-                    tutor.getAvailableDate(),
-                    tutor.getLocation(),
-                    tutor.isScheduled() ? "Yes" : "No",
-                    tutor.getScheduleDate().isEmpty() ? "Not Scheduled" : tutor.getScheduleDate()
+                        tutor.getName(),
+                        tutor.getAvailableDate(),
+                        tutor.getLocation(),
+                        tutor.isScheduled() ? "Yes" : "No"
                 });
             }
         }
@@ -836,13 +837,9 @@ public class Platform extends JFrame {
                     return;
                 }
 
-                String scheduleDate = JOptionPane.showInputDialog(this, "Enter Schedule Date (MM-dd-yyyy):");
-                if (scheduleDate != null && !scheduleDate.trim().isEmpty()) {
-                    tutor.setScheduled(true);
-                    tutor.setScheduleDate(scheduleDate);
-                    updateSessionTable();
-                    JOptionPane.showMessageDialog(this, "Session scheduled successfully.");
-                }
+                tutor.setScheduled(true);
+                updateSessionTable();
+                JOptionPane.showMessageDialog(this, "Session scheduled successfully.");
                 return;
             }
         }

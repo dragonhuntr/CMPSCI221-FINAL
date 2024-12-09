@@ -4,15 +4,13 @@ public class Tutor {
     private String availableDate;
     private String location;
     private boolean isScheduled;
-    private String scheduleDate;
 
-    public Tutor(String name, String tutorClass, String availableDate, String location, boolean isScheduled, String scheduleDate) {
+    public Tutor(String name, String tutorClass, String availableDate, String location, boolean isScheduled) {
         this.name = name;
         this.tutorClass = tutorClass;
         this.availableDate = availableDate;
         this.location = location;
         this.isScheduled = isScheduled;
-        this.scheduleDate = scheduleDate;
     }
 
     public String getName() {
@@ -37,13 +35,5 @@ public class Tutor {
 
     public void setScheduled(boolean scheduled) {
         isScheduled = scheduled;
-    }
-
-    public String getScheduleDate() {
-        return scheduleDate;
-    }
-
-    public void setScheduleDate(String scheduleDate) {
-        this.scheduleDate = scheduleDate;
     }
 }
