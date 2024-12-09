@@ -68,8 +68,6 @@ public class StudyPlatformApp extends JFrame {
         // Ensure GUI is created on Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             try {
-                // Set system look and feel for a native appearance
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
                 e.printStackTrace();
             }

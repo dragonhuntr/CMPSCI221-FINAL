@@ -14,13 +14,20 @@ public class CourseworkDAO implements BaseDAO<Coursework> {
     public void createTable() throws SQLException {
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement()) {
-            String createTableSQL = "CREATE TABLE " + TABLE_NAME + " (" +
+            // Use CREATE TABLE IF NOT EXISTS to prevent errors if table already exists
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                     "id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
                     "name VARCHAR(255), " +
                     "details VARCHAR(1000), " +
                     "due_date DATE, " +
                     "status VARCHAR(50))";
             stmt.execute(createTableSQL);
+        } catch (SQLException e) {
+            // Log the error, but don't rethrow if it's just about table already existing
+            if (!e.getSQLState().equals("X0Y32")) {  // Derby's code for table already existing
+                System.err.println("Error creating coursework table: " + e.getMessage());
+                throw e;
+            }
         }
     }
 
@@ -31,7 +38,7 @@ public class CourseworkDAO implements BaseDAO<Coursework> {
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, coursework.getName());
             pstmt.setString(2, coursework.getDetails());
-            pstmt.setDate(3, new Date(coursework.getDueDate().getTime()));
+            pstmt.setDate(3, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
             pstmt.setString(4, coursework.getStatus());
             
             pstmt.executeUpdate();
@@ -73,7 +80,7 @@ public class CourseworkDAO implements BaseDAO<Coursework> {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, coursework.getName());
             pstmt.setString(2, coursework.getDetails());
-            pstmt.setDate(3, new Date(coursework.getDueDate().getTime()));
+            pstmt.setDate(3, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
             pstmt.setString(4, coursework.getStatus());
             pstmt.setInt(5, coursework.getId());
             
@@ -95,11 +102,9 @@ public class CourseworkDAO implements BaseDAO<Coursework> {
     public List<Coursework> findAll() throws SQLException {
         List<Coursework> courseworks = new ArrayList<>();
         String sql = "SELECT * FROM " + TABLE_NAME;
-        
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            
             while (rs.next()) {
                 Coursework coursework = new Coursework();
                 coursework.setId(rs.getInt("id"));
@@ -110,7 +115,6 @@ public class CourseworkDAO implements BaseDAO<Coursework> {
                 courseworks.add(coursework);
             }
         }
-        
         return courseworks;
     }
 }

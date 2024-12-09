@@ -7,7 +7,7 @@ import java.io.File;
 
 public class DatabaseUtil {
     private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
-    private static final String DB_URL = "jdbc:derby:studyplatformDB;create=true";
+    private static final String DB_URL = "jdbc:derby:studydb;";
     private static Connection connection;
 
     // Static initializer to load Derby driver
@@ -33,29 +33,9 @@ public class DatabaseUtil {
             
             // Establish connection
             connection = DriverManager.getConnection(DB_URL);
+
+            System.out.println("Connected to database: " + DB_URL);
         }
         return connection;
-    }
-
-    public static void closeConnection() {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                System.err.println("Error closing database connection: " + e.getMessage());
-            }
-        }
-    }
-
-    // Shutdown the Derby database
-    public static void shutdownDatabase() {
-        try {
-            DriverManager.getConnection("jdbc:derby:;shutdown=true");
-        } catch (SQLException e) {
-            // Derby throws an exception on successful shutdown, so we ignore it
-            if (!e.getSQLState().equals("XJ015")) {
-                System.err.println("Database shutdown error: " + e.getMessage());
-            }
-        }
     }
 }

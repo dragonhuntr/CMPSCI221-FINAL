@@ -13,7 +13,8 @@ public class TaskDAO implements BaseDAO<Task> {
     public void createTable() throws SQLException {
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement()) {
-            String createTableSQL = "CREATE TABLE " + TABLE_NAME + " (" +
+            // Use CREATE TABLE IF NOT EXISTS to prevent errors if table already exists
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                     "id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
                     "title VARCHAR(255), " +
                     "description VARCHAR(1000), " +
@@ -21,6 +22,12 @@ public class TaskDAO implements BaseDAO<Task> {
                     "due_date VARCHAR(50), " +
                     "status VARCHAR(50))";
             stmt.execute(createTableSQL);
+        } catch (SQLException e) {
+            // Log the error, but don't rethrow if it's just about table already existing
+            if (!e.getSQLState().equals("X0Y32")) {  // Derby's code for table already existing
+                System.err.println("Error creating tasks table: " + e.getMessage());
+                throw e;
+            }
         }
     }
 
