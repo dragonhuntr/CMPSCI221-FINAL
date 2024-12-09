@@ -1,11 +1,14 @@
 package com.studyplatform.models;
 
 public class Task {
+    private int id;
     private String title;
     private String description;
     private String type;
     private String dueDate;
     private String status;
+
+    public Task() {}
 
     public Task(String title, String description, String type, String dueDate, String status) {
         this.title = title;
@@ -14,6 +17,9 @@ public class Task {
         this.dueDate = dueDate;
         this.status = status;
     }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     // Getters and Setters
     public String getTitle() { return title; }
