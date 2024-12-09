@@ -20,6 +20,7 @@ public class StudyPlanController {
         this.courseworkDAO = new CourseworkDAO();
         try {
             this.studyPlanDAO.createTable();
+            this.courseworkDAO.createTable();
         } catch (SQLException e) {
             System.err.println("Error creating study plans table: " + e.getMessage());
         }

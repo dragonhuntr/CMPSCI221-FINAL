@@ -39,10 +39,6 @@ public class NotificationView extends JPanel {
 
         // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton createNotificationButton = new JButton("Create Notification");
-        createNotificationButton.addActionListener(e -> createNotification());
-        buttonPanel.add(createNotificationButton);
 
         JButton markReadButton = new JButton("Mark as Read");
         markReadButton.addActionListener(e -> markSelectedNotificationAsRead());
@@ -56,34 +52,6 @@ public class NotificationView extends JPanel {
 
         // Initial refresh
         refreshNotificationTable();
-    }
-
-    private void createNotification() {
-        // Create input panel for notification details
-        JTextField titleField = new JTextField();
-        JTextField descriptionField = new JTextField();
-
-        JPanel inputPanel = new JPanel(new GridLayout(2, 2));
-        inputPanel.add(new JLabel("Title:"));
-        inputPanel.add(titleField);
-        inputPanel.add(new JLabel("Description:"));
-        inputPanel.add(descriptionField);
-
-        int result = JOptionPane.showConfirmDialog(
-                this, inputPanel, "Create Notification", 
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-        if (result == JOptionPane.OK_OPTION) {
-            String title = titleField.getText().trim();
-            String description = descriptionField.getText().trim();
-
-            if (!title.isEmpty() && !description.isEmpty()) {
-                notificationController.createNotification(title, description);
-                refreshNotificationTable();
-            } else {
-                JOptionPane.showMessageDialog(this, "Title and description cannot be empty.");
-            }
-        }
     }
 
     private void markSelectedNotificationAsRead() {
