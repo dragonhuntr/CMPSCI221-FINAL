@@ -1,14 +1,11 @@
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class Task {
     private String title;
     private String description;
     private String type;
-    private Date dueDate;
+    private String dueDate;
     private String status;
 
-    public Task(String title, String description, String type, Date dueDate, String status) {
+    public Task(String title, String description, String type, String dueDate, String status) {
         this.title = title;
         this.description = description;
         this.type = type;
@@ -42,11 +39,10 @@ public class Task {
     }
 
     public String getDueDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-        return sdf.format(dueDate);
+        return dueDate;
     }
 
-    public void setDueDate(Date dueDate) {
+    public void setDueDate(String dueDate) {
         this.dueDate = dueDate;
     }
 

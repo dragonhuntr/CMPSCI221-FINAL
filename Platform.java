@@ -21,6 +21,9 @@ public class Platform extends JFrame {
     private JComboBox<String> classDropdown;
     private DefaultTableModel sessionTableModel;
     private JTable sessionTable;
+    private List<Notification> notifications = new ArrayList<>();
+    private DefaultTableModel notificationTableModel;
+    private JTabbedPane tabbedPane;
     private List<Task> tasks = new ArrayList<>();
     private Map<String, Group> groups = new HashMap<>();
     private Map<String, List<StudyPlan>> studyPlans = new HashMap<>();
@@ -32,39 +35,33 @@ public class Platform extends JFrame {
         setTitle("Study Management Platform");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
-
-        // TabbedPane to switch between panels
-        JTabbedPane tabbedPane = new JTabbedPane();
-
-        // Add Task Manager Tab
+    
+        // Create tabs
+        tabbedPane = new JTabbedPane();
+    
         JPanel taskPanel = createTaskPanel();
         tabbedPane.addTab("Task Manager", taskPanel);
-
-        // Add Task List Tab
+    
         JPanel taskListTab = createTaskListTab();
         tabbedPane.addTab("Task List", taskListTab);
-
-        // Group Management Tab
+    
         JPanel groupPanel = createGroupPanel();
         tabbedPane.addTab("Group Management", groupPanel);
-
-        // Student Plan Tab
+    
         JPanel studyPlanPanel = createStudyPlanPanel();
         tabbedPane.addTab("Study Plans", studyPlanPanel);
-
-        // Tutoring Tab
+    
         JPanel tutoringPanel = createTutoringPanel();
         tabbedPane.addTab("Tutoring", tutoringPanel);
-        populateTutors();
-
-        // Notification Tab
-        JPanel notificationPanel = createStudyPlanPanel();
+    
+        JPanel notificationPanel = createNotificationsTab();
         tabbedPane.addTab("Notifications", notificationPanel);
-
-        // Add tabbedPane to frame
+    
+        populateTutors();
         getContentPane().add(tabbedPane);
+        startNotificationChecker();
     }
-
+    
     private JPanel createTaskPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Task Management"));
@@ -131,7 +128,7 @@ public class Platform extends JFrame {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
         try {
             Date dueDate = sdf.parse(taskDueDateField.getText());
-            Task task = new Task(title, description, type, dueDate, status);
+            Task task = new Task(title, description, type, taskDueDateField.getText(), status);
             tasks.add(task);
 
             // Add task to the table model
@@ -187,7 +184,7 @@ public class Platform extends JFrame {
                 task.setTitle(titleField.getText().trim());
                 task.setDescription(descriptionField.getText().trim());
                 task.setType((String) typeComboBox.getSelectedItem());
-                task.setDueDate(dueDate);
+                task.setDueDate(dueDate.toString());
                 task.setStatus((String) statusComboBox.getSelectedItem());
 
                 // Update table model
@@ -777,8 +774,14 @@ public class Platform extends JFrame {
         // Button to schedule session
         JButton scheduleButton = new JButton("Schedule Session");
         scheduleButton.addActionListener(e -> scheduleSession());
+
+        // Button to volunteer as a tutor
+        JButton volunteerButton = new JButton("Volunteer as Tutor");
+        volunteerButton.addActionListener(e -> volunteerAsTutor());
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(scheduleButton);
+        buttonPanel.add(volunteerButton);
 
         tutoringPanel.add(topPanel, BorderLayout.NORTH);
         tutoringPanel.add(tableScrollPane, BorderLayout.CENTER);
@@ -843,6 +846,206 @@ public class Platform extends JFrame {
                 return;
             }
         }
+    }
+
+    private void volunteerAsTutor() {
+        // Create input fields
+        JTextField nameField = new JTextField();
+        JTextField classField = new JTextField();
+        JTextField availableDateField = new JTextField();
+        availableDateField.setToolTipText("MM-dd-yyyy");
+        JTextField locationField = new JTextField();
+
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+        inputPanel.add(new JLabel("Name:"));
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Class:"));
+        inputPanel.add(classField);
+        inputPanel.add(new JLabel("Available Date (MM-dd-yyyy):"));
+        inputPanel.add(availableDateField);
+        inputPanel.add(new JLabel("Location:"));
+        inputPanel.add(locationField);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, inputPanel, "Volunteer as Tutor", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String name = nameField.getText().trim();
+                String tutorClass = classField.getText().trim();
+                String availableDate = availableDateField.getText().trim();
+                String location = locationField.getText().trim();
+
+                if (name.isEmpty() || tutorClass.isEmpty() || availableDate.isEmpty() || location.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "All fields are required.");
+                    return;
+                }
+
+                // Validate the date format
+                SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+                sdf.setLenient(false);
+                sdf.parse(availableDate);
+
+                // Add new tutor to the list
+                Tutor newTutor = new Tutor(name, tutorClass, availableDate, location, false);
+                tutors.add(newTutor);
+
+                // Update dropdown if the class is new
+                if (!classDropdown.getItemAt(0).equals(tutorClass)) {
+                    boolean exists = false;
+                    for (int i = 0; i < classDropdown.getItemCount(); i++) {
+                        if (classDropdown.getItemAt(i).equals(tutorClass)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        classDropdown.addItem(tutorClass);
+                    }
+                }
+
+                JOptionPane.showMessageDialog(this, "Your volunteer tutor application has been submitted.");
+                updateSessionTable(); // Refresh the table to include the new tutor
+            } catch (ParseException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+            }
+        }
+    }
+
+    private JPanel createNotificationsTab() {
+        JPanel notificationPanel = new JPanel(new BorderLayout());
+    
+        // Notifications Table
+        notificationTableModel = new DefaultTableModel(new String[] { "Date", "Content", "Read" }, 0);
+    
+        // Populate table with existing notifications
+        for (Notification notification : notifications) {
+            notificationTableModel.addRow(new Object[] {
+                new SimpleDateFormat("MM-dd-yyyy").format(notification.getSentDate()),
+                notification.getContent(),
+                notification.isRead() ? "Yes" : "No"
+            });
+        }
+    
+        JTable notificationTable = new JTable(notificationTableModel);
+        notificationTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+        JScrollPane tableScrollPane = new JScrollPane(notificationTable);
+    
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    
+        JButton deleteNotificationButton = new JButton("Delete Notification");
+        deleteNotificationButton.addActionListener(e -> deleteSelectedNotification(notificationTable));
+    
+        JButton markAllReadButton = new JButton("Mark All as Read");
+        markAllReadButton.addActionListener(e -> markAllNotificationsAsRead());
+    
+        buttonPanel.add(deleteNotificationButton);
+        buttonPanel.add(markAllReadButton);
+    
+        notificationPanel.add(tableScrollPane, BorderLayout.CENTER);
+        notificationPanel.add(buttonPanel, BorderLayout.SOUTH);
+    
+        return notificationPanel;
+    }
+
+    private void startNotificationChecker() {
+        Timer timer = new Timer(5000, e -> checkForNotifications());
+        timer.start();
+    }
+
+    private void checkForNotifications() {
+        Date currentDate = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+
+        // Check task due dates
+        for (Task task : tasks) {
+            if (!task.getStatus().equals("Completed") &&
+                    task.getDueDate().equals(sdf.format(currentDate))) {
+                String content = "Task due today: " + task.getTitle();
+                addNotification(content);
+            }
+        }
+
+        // Check tutor availability
+        for (Tutor tutor : tutors) {
+            if (tutor.isScheduled() &&
+                    tutor.getAvailableDate().equals(sdf.format(currentDate))) {
+                String content = "Scheduled tutor session today: " + tutor.getName();
+                addNotification(content);
+            }
+        }
+
+        updateNotificationsTab();
+    }
+
+    private void addNotification(String content) {
+        // Check if a notification with the same content and today's date already exists
+        Date currentDate = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+        boolean exists = notifications.stream().anyMatch(notification ->
+            notification.getContent().equals(content) &&
+            sdf.format(notification.getSentDate()).equals(sdf.format(currentDate))
+        );
+    
+        if (exists) {
+            // If a duplicate notification exists, skip adding
+            return;
+        }
+    
+        // Add the new notification if it's not a duplicate
+        Notification notification = new Notification(currentDate, content);
+        notifications.add(notification);
+    
+        // Add the notification to the table model
+        notificationTableModel.addRow(new Object[] {
+            sdf.format(notification.getSentDate()),
+            notification.getContent(),
+            notification.isRead() ? "Yes" : "No"
+        });
+    
+        // Update the tab title
+        updateNotificationsTab();
+    }
+
+    private void updateNotificationsTab() {
+        // Iterate over all tabs to find the one that starts with "Notifications"
+        int notificationsTabIndex = -1;
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            String tabTitle = tabbedPane.getTitleAt(i);
+            if (tabTitle.startsWith("Notifications")) {
+                notificationsTabIndex = i;
+                break;
+            }
+        }
+    
+        // Ensure the tab exists
+        if (notificationsTabIndex != -1) {
+            int unreadCount = (int) notifications.stream().filter(notification -> !notification.isRead()).count();
+    
+            // Update the tab title to show unread notifications count
+            String newTitle = unreadCount > 0 ? "Notifications (" + unreadCount + ")" : "Notifications";
+            tabbedPane.setTitleAt(notificationsTabIndex, newTitle);
+        } else {
+            // Handle the case where the Notifications tab is not found
+            System.err.println("Notifications tab not found in JTabbedPane.");
+        }
+    }
+
+    private void deleteSelectedNotification(JTable notificationTable) {
+        int selectedRow = notificationTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            notifications.remove(selectedRow);
+            notificationTableModel.removeRow(selectedRow); // Update table
+            updateNotificationsTab();
+        } else {
+            JOptionPane.showMessageDialog(this, "No notification selected.");
+        }
+    }    
+
+    private void markAllNotificationsAsRead() {
+        notifications.forEach(Notification::markAsRead);
+        updateNotificationsTab();
     }
 
     public static void main(String[] args) {
