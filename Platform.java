@@ -955,126 +955,111 @@ public class Platform extends JFrame {
     }
 
     private void checkForNotifications() {
-        Date currentDate = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-
+        String currentDateString = sdf.format(new Date()); // Current date as string
+    
         // Check task due dates
         for (Task task : tasks) {
-            if (!task.getStatus().equals("Completed") &&
-                    task.getDueDate().equals(sdf.format(currentDate))) {
+            if (!task.getStatus().equals("Completed") && task.getDueDate().equals(currentDateString)) {
                 String content = "Task due today: " + task.getTitle();
                 addNotification(content);
             }
         }
-
+    
         // Check tutor availability
         for (Tutor tutor : tutors) {
-            if (tutor.isScheduled() &&
-                    tutor.getAvailableDate().equals(sdf.format(currentDate))) {
+            if (tutor.isScheduled() && tutor.getAvailableDate().equals(currentDateString)) {
                 String content = "Scheduled tutor session today: " + tutor.getName();
                 addNotification(content);
             }
         }
-
-        updateNotificationsTab();
     }
-
-    private void addNotification(String content) {
-        // Get the current date formatted as MM-dd-yyyy
-        Date currentDate = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-        String currentDateString = sdf.format(currentDate);
     
-        // Check if a notification with the same content and date already exists, regardless of deletion state
+    private void addNotification(String content) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+        String currentDateString = sdf.format(new Date()); // Current date as string
+    
+        // Check for duplicates, even if deleted
         boolean exists = notifications.stream()
-                .anyMatch(notification -> notification.getContent().equals(content) &&
-                        sdf.format(notification.getSentDate()).equals(currentDateString) &&
-                        !notification.isDeleted());
+                .anyMatch(notification -> notification.getContent().equals(content)
+                        && notification.getSentDate().equals(currentDateString));
     
         if (exists) {
-            // If a duplicate notification exists, skip adding
-            return;
+            return; // Skip adding if duplicate exists
         }
     
-        // Add the new notification if it's not a duplicate
-        Notification notification = new Notification(currentDate, content);
+        // Add new notification
+        Notification notification = new Notification(currentDateString, content);
         notifications.add(notification);
     
-        // Add the notification to the table model
-        notificationTableModel.addRow(new Object[] {
-                currentDateString,
-                notification.getContent(),
-                notification.isRead() ? "Yes" : "No"
-        });
-    
-        // Update the tab title
+        // Refresh the table and update the tab title
+        refreshNotificationTable();
         updateNotificationsTab();
     }
     
     private void updateNotificationsTab() {
-        // Find the Notifications tab index
         int notificationsTabIndex = -1;
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-            String tabTitle = tabbedPane.getTitleAt(i);
-            if (tabTitle.startsWith("Notifications")) {
+            if (tabbedPane.getTitleAt(i).startsWith("Notifications")) {
                 notificationsTabIndex = i;
                 break;
             }
         }
     
-        // Ensure the tab exists
         if (notificationsTabIndex != -1) {
-            // Count unread notifications that are not deleted
             long unreadCount = notifications.stream()
                     .filter(notification -> !notification.isRead() && !notification.isDeleted())
                     .count();
     
-            // Update the tab title to show unread notifications count
             String newTitle = unreadCount > 0 ? "Notifications (" + unreadCount + ")" : "Notifications";
             tabbedPane.setTitleAt(notificationsTabIndex, newTitle);
-        } else {
-            // Log an error if the Notifications tab is not found
-            System.err.println("Notifications tab not found in JTabbedPane.");
         }
-    }
-    
+    }    
     
     private void deleteSelectedNotification(JTable notificationTable) {
         int selectedRow = notificationTable.getSelectedRow();
         if (selectedRow >= 0) {
-            // Mark the notification as deleted
-            notifications.get(selectedRow).markAsDeleted();
+            // Locate the corresponding notification and mark as deleted
+            Notification notification = notifications.stream()
+                    .filter(notif -> !notif.isDeleted()) // Find based on visible notifications
+                    .skip(selectedRow)
+                    .findFirst()
+                    .orElse(null);
     
-            // Remove the row from the table model
-            notificationTableModel.removeRow(selectedRow);
+            if (notification != null) {
+                notification.markAsDeleted(); // Mark as deleted
+            }
     
-            // Update the notifications tab title to reflect the unread count
-            updateNotificationsTab();
+            refreshNotificationTable(); // Refresh UI
+            updateNotificationsTab();   // Update unread count
         } else {
             JOptionPane.showMessageDialog(this, "No notification selected.");
         }
     }
     
     private void markAllNotificationsAsRead() {
-        notifications.forEach(Notification::markAsRead);
-        updateNotificationsTab();
-        refreshNotificationTable();
-    }
-
+        notifications.stream()
+                .filter(notification -> !notification.isDeleted()) // Exclude deleted
+                .forEach(Notification::markAsRead);
+    
+        refreshNotificationTable(); // Refresh UI
+        updateNotificationsTab();   // Update tab title
+    }    
+    
     private void refreshNotificationTable() {
         notificationTableModel.setRowCount(0); // Clear the table model
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
     
-        // Re-populate the table with updated notifications
         for (Notification notification : notifications) {
-            notificationTableModel.addRow(new Object[] {
-                sdf.format(notification.getSentDate()),
-                notification.getContent(),
-                notification.isRead() ? "Yes" : "No"
-            });
+            if (!notification.isDeleted()) { // Exclude deleted notifications
+                notificationTableModel.addRow(new Object[] {
+                    notification.getSentDate(),
+                    notification.getContent(),
+                    notification.isRead() ? "Yes" : "No"
+                });
+            }
         }
-    }    
-
+    }     
+    
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             Platform platform = new Platform();
