@@ -41,7 +41,13 @@ public class Task {
         this.type = type;
     }
 
-    public String getDueDate() {
+    // Modify getDueDate to return the actual Date object
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    // Keep the formatted date method if you still want string representation
+    public String getFormattedDueDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
         return sdf.format(dueDate);
     }

@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,21 @@ public class Platform extends JFrame {
     private Map<String, List<String>> studyPlans = new HashMap<>();
     private String[] taskTypes = { "Assignment", "Project", "Homework" };
 
+    private DatabaseManager databaseManager;
     public Platform() {
+
+        // Initialize database manager
+        databaseManager = new DatabaseManager();
+        loadExistingTasks();
+
+        // When closing the application, close the database connection
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                databaseManager.closeConnection();
+            }
+        });
+
+
         setTitle("Study Management Platform");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
@@ -117,8 +133,17 @@ public class Platform extends JFrame {
         try {
             Date dueDate = sdf.parse(taskDueDateField.getText());
             Task task = new Task(title, description, type, dueDate, status);
+
+            // Add task to local list
             tasks.add(task);
+
+            // Add task to database
+            databaseManager.addTask(task);
+
+            // Add task to UI list
             addTaskToList(task);
+
+            // Clear input fields
             taskTitleField.setText("");
             taskDescriptionField.setText("");
             taskDueDateField.setText("");
@@ -156,7 +181,7 @@ public class Platform extends JFrame {
         JTextField descriptionField = new JTextField(task.getDescription());
         JComboBox<String> typeComboBox = new JComboBox<>(taskTypes);
         typeComboBox.setSelectedItem(task.getType());
-        JTextField dueDateField = new JTextField(task.getDueDate());
+        JTextField dueDateField = new JTextField(String.valueOf(task.getDueDate()));
         JComboBox<String> statusComboBox = new JComboBox<>(new String[] { "Incomplete", "Complete" });
 
         // Create a panel to hold the input fields
@@ -564,6 +589,14 @@ public class Platform extends JFrame {
 
         panel.add(splitPane, BorderLayout.CENTER);
         return panel;
+    }
+
+    private void loadExistingTasks() {
+        List<Task> existingTasks = databaseManager.getAllTasks();
+        for (Task task : existingTasks) {
+            tasks.add(task);
+            addTaskToList(task);
+        }
     }
 
     public static void main(String[] args) {
