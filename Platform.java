@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +15,8 @@ public class Platform extends JFrame {
     private JTextField taskDescriptionField;
     private JComboBox<String> taskTypeComboBox;
     private JTextField taskDueDateField;
-    private JPanel taskListPanel;
+    private DefaultTableModel taskTableModel;
+    private JTable taskTable;
     private JPanel groupListPanel;
     private List<Task> tasks = new ArrayList<>();
     private Map<String, Group> groups = new HashMap<>();
@@ -34,9 +37,8 @@ public class Platform extends JFrame {
         tabbedPane.addTab("Task Manager", taskPanel);
 
         // Add Task List Tab
-        taskListPanel = new JPanel(new GridLayout(0, 1)); // Grid layout for task list
-        JScrollPane taskScrollPane = new JScrollPane(taskListPanel); // Scrollable panel for tasks
-        tabbedPane.addTab("Task List", taskScrollPane);
+        JPanel taskListTab = createTaskListTab();
+        tabbedPane.addTab("Task List", taskListTab);
 
         // Group Management Tab
         JPanel groupPanel = createGroupPanel();
@@ -126,48 +128,33 @@ public class Platform extends JFrame {
             Date dueDate = sdf.parse(taskDueDateField.getText());
             Task task = new Task(title, description, type, dueDate, status);
             tasks.add(task);
-            addTaskToList(task);
+
+            // Add task to the table model
+            taskTableModel.addRow(new Object[] { title, description, type, sdf.format(dueDate), status });
+
+            // Clear input fields
             taskTitleField.setText("");
             taskDescriptionField.setText("");
             taskDueDateField.setText("");
-
         } catch (ParseException ex) {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
         }
     }
 
-    private void addTaskToList(Task task) {
-        JPanel taskPanel = new JPanel(new BorderLayout());
-        taskPanel.setBorder(BorderFactory.createTitledBorder(task.getTitle()));
-
-        taskDetailsRefresh(task, taskPanel);
-
-        // Add the task panel to the task list panel
-        taskListPanel.add(taskPanel);
-
-        // Revalidate and repaint the task list panel to reflect the changes
-        taskListPanel.revalidate();
-        taskListPanel.repaint();
-    }
-
-    private void deleteTask(Task task, JPanel taskPanel) {
-        tasks.remove(task);
-        taskListPanel.remove(taskPanel);
-        taskListPanel.revalidate();
-        taskListPanel.repaint();
-        JOptionPane.showMessageDialog(this, "Task deleted successfully!");
-    }
-
-    private void updateTask(Task task, JPanel taskPanel) {
-        // Create fields for editing task details
+    private void updateTask(Task task, int rowIndex) {
+        // Input fields
         JTextField titleField = new JTextField(task.getTitle());
         JTextField descriptionField = new JTextField(task.getDescription());
         JComboBox<String> typeComboBox = new JComboBox<>(taskTypes);
         typeComboBox.setSelectedItem(task.getType());
-        JTextField dueDateField = new JTextField(task.getDueDate());
+        
+        String dueDateString = task.getDueDate();
+        JTextField dueDateField = new JTextField(dueDateString);
+        
         JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
-
-        // Create a panel to hold the input fields
+        statusComboBox.setSelectedItem(task.getStatus());
+    
+        // Create input panel
         JPanel editPanel = new JPanel(new GridLayout(5, 2));
         editPanel.add(new JLabel("Title:"));
         editPanel.add(titleField);
@@ -177,76 +164,88 @@ public class Platform extends JFrame {
         editPanel.add(typeComboBox);
         editPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
         editPanel.add(dueDateField);
-        editPanel.add(new JLabel("Status"));
+        editPanel.add(new JLabel("Status:"));
         editPanel.add(statusComboBox);
-
-        // Show input dialog
+    
         int result = JOptionPane.showConfirmDialog(
                 this, editPanel, "Update Task", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-        // If user clicked OK, update the task
+    
         if (result == JOptionPane.OK_OPTION) {
             try {
-                // Parse the due date
-                Date dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
-
-                // Update the task details
-                task.setTitle(titleField.getText());
-                task.setDescription(descriptionField.getText());
+                // Parse due date if not empty
+                Date dueDate = null;
+                if (!dueDateField.getText().trim().isEmpty()) {
+                    dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateField.getText());
+                }
+    
+                // Update task properties
+                task.setTitle(titleField.getText().trim());
+                task.setDescription(descriptionField.getText().trim());
                 task.setType((String) typeComboBox.getSelectedItem());
                 task.setDueDate(dueDate);
                 task.setStatus((String) statusComboBox.getSelectedItem());
-
-                // Refresh the task panel
-                taskDetailsRefresh(task, taskPanel);
-
+    
+                // Update table model
+                taskTableModel.setValueAt(task.getTitle(), rowIndex, 0);
+                taskTableModel.setValueAt(task.getDescription(), rowIndex, 1);
+                taskTableModel.setValueAt(task.getType(), rowIndex, 2);
+                taskTableModel.setValueAt(dueDate != null ? new SimpleDateFormat("MM-dd-yyyy").format(dueDate) : "Not set", rowIndex, 3);
+                taskTableModel.setValueAt(task.getStatus(), rowIndex, 4);
+    
                 JOptionPane.showMessageDialog(this, "Task updated successfully!");
-            } catch (ParseException e) {
+            } catch (ParseException ex) {
                 JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
             }
         }
     }
+    
+    private JPanel createTaskListTab() {
+        // Panel to hold task table and buttons
+        JPanel taskListPanel = new JPanel(new BorderLayout());
 
-    private void taskDetailsRefresh(Task task, JPanel taskPanel) {
-        // Clear and refresh the task panel with updated details
-        taskPanel.removeAll();
+        // Task table
+        taskTableModel = new DefaultTableModel(new String[] { "Title", "Description", "Type", "Due Date", "Status" },
+                0);
+        taskTable = new JTable(taskTableModel);
+        JScrollPane taskScrollPane = new JScrollPane(taskTable);
 
-        // Task details
-        JTextArea taskDetails = new JTextArea();
-        taskDetails.setText("Title: " + task.getTitle() + "\n" +
-                "Description: " + task.getDescription() + "\n" +
-                "Type: " + task.getType() + "\n" +
-                "Due Date: " + task.getDueDate() + "\n" +
-                "Status: " + task.getStatus());
-        taskDetails.setEditable(false);
-        taskPanel.add(taskDetails, BorderLayout.CENTER);
+        // Buttons for task management
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
 
-        // Button panel with GridBagLayout for proper positioning
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // Padding
+        // Edit Task Button
+        JButton editTaskButton = new JButton("Edit Task");
+        editTaskButton.addActionListener(e -> {
+            int selectedRow = taskTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                Task selectedTask = tasks.get(selectedRow);
+                updateTask(selectedTask, selectedRow);
+            } else {
+                JOptionPane.showMessageDialog(this, "No task selected.");
+            }
+        });
 
-        // Update Task Button (on the left)
-        JButton updateButton = new JButton("Update Task");
-        updateButton.addActionListener(e -> updateTask(task, taskPanel));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST; // Align to the left
-        buttonPanel.add(updateButton, gbc);
+        // Delete Task Button
+        JButton deleteTaskButton = new JButton("Delete Task");
+        deleteTaskButton.addActionListener(e -> {
+            int selectedRow = taskTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                tasks.remove(selectedRow);
+                taskTableModel.removeRow(selectedRow);
+                JOptionPane.showMessageDialog(this, "Task deleted successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "No task selected.");
+            }
+        });
 
-        // Delete Task Button (on the right)
-        JButton deleteButton = new JButton("Delete Task");
-        deleteButton.addActionListener(e -> deleteTask(task, taskPanel));
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.EAST; // Align to the right
-        buttonPanel.add(deleteButton, gbc);
+        // Add buttons to the panel
+        buttonPanel.add(editTaskButton);
+        buttonPanel.add(deleteTaskButton);
 
-        // Add button panel to the bottom of the taskPanel
-        taskPanel.add(buttonPanel, BorderLayout.SOUTH);
+        // Add table and buttons to the main panel
+        taskListPanel.add(taskScrollPane, BorderLayout.CENTER);
+        taskListPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Revalidate and repaint the panel to show the changes
-        taskPanel.revalidate();
-        taskPanel.repaint();
+        return taskListPanel;
     }
 
     private JPanel createGroupPanel() {
@@ -565,8 +564,7 @@ public class Platform extends JFrame {
                         JTextField nameField = new JTextField();
                         JTextField detailsField = new JTextField();
                         JTextField dueDateField = new JTextField();
-                        JComboBox<String> statusComboBox = new JComboBox<>(
-                                new String[] { "Not Started", "In Progress", "Completed" });
+                        JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
 
                         inputPanel.add(new JLabel("Name:"));
                         inputPanel.add(nameField);
@@ -749,7 +747,8 @@ public class Platform extends JFrame {
         }
 
         courseworkTable.setModel(
-                new javax.swing.table.DefaultTableModel(tableData, new String[] { "Name", "Details", "Due Date", "Status" }));
+                new javax.swing.table.DefaultTableModel(tableData,
+                        new String[] { "Name", "Details", "Due Date", "Status" }));
     }
 
     public static void main(String[] args) {
