@@ -98,7 +98,7 @@ public class StudyPlanController {
     @Deprecated
     public void addCourseworkToStudyPlan(String course, String studyPlanName, 
                                          String courseworkName, String details, 
-                                         Date dueDate, String status) {
+                                         String dueDate, String status) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
             StudyPlan targetPlan = coursePlans.stream()
@@ -118,7 +118,7 @@ public class StudyPlanController {
     @Deprecated
     public void updateCoursework(String course, String studyPlanName, 
                                  String courseworkName, String newName, 
-                                 String newDetails, Date newDueDate, 
+                                 String newDetails, String newDueDate, 
                                  String newStatus) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);

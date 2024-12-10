@@ -9,7 +9,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 public class StudyPlanView extends JPanel {
@@ -191,13 +190,12 @@ public class StudyPlanView extends JPanel {
 
     private void refreshCourseworkTable(StudyPlan studyPlan) {
         courseworkTableModel.setRowCount(0);
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-        
+
         for (Coursework cw : studyPlan.getCourseworkList()) {
             courseworkTableModel.addRow(new Object[]{
                 cw.getName(),
                 cw.getDetails() == null ? "Not set" : cw.getDetails(),
-                cw.getDueDate() == null ? "Not set" : sdf.format(cw.getDueDate()),
+                cw.getDueDate() == null ? "Not set" : cw.getDueDate(),
                 cw.getStatus() == null ? "Not set" : cw.getStatus()
             });
         }
@@ -232,14 +230,15 @@ public class StudyPlanView extends JPanel {
                     return;
                 }
 
-                // Parse due date
-                Date dueDate = null;
-                String dueDateText = dueDateField.getText().trim();
-                if (!dueDateText.isEmpty()) {
+                String dueDate = dueDateField.getText().trim();
+
+                if (!dueDate.isEmpty()) {
                     try {
-                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateText);
+                        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+                        sdf.setLenient(false);  // Strict date parsing
+                        sdf.parse(dueDate);
                     } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Invalid date format. Use MM-dd-yyyy.");
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
                         return;
                     }
                 }
@@ -308,13 +307,15 @@ public class StudyPlanView extends JPanel {
                 }
 
                 // Parse due date
-                Date dueDate = null;
-                String dueDateText = dueDateField.getText().trim();
-                if (!dueDateText.isEmpty()) {
+                String dueDate = dueDateField.getText().trim();
+
+                if (!dueDate.isEmpty()) {
                     try {
-                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateText);
+                        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+                        sdf.setLenient(false);  // Strict date parsing
+                        sdf.parse(dueDate);
                     } catch (ParseException ex) {
-                        JOptionPane.showMessageDialog(this, "Invalid date format. Use MM-dd-yyyy.");
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
                         return;
                     }
                 }

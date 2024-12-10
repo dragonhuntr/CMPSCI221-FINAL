@@ -7,7 +7,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 public class TaskView extends JPanel {
     private TaskController taskController;
@@ -119,9 +118,9 @@ public class TaskView extends JPanel {
             String description = taskDescriptionField.getText();
             String type = (String) taskTypeComboBox.getSelectedItem();
             String dueDateStr = taskDueDateField.getText();
-            String status = "Incomplete";
+            String status = "Not Started";
 
-            Task task = taskController.createTask(title, description, type, dueDateStr, status);
+            taskController.createTask(title, description, type, dueDateStr, status);
 
             // Clear input fields
             taskTitleField.setText("");
@@ -201,8 +200,6 @@ public class TaskView extends JPanel {
         // Clear existing rows
         taskTableModel.setRowCount(0);
 
-        // Populate with current tasks
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
         for (Task task : taskController.getAllTasks()) {
             taskTableModel.addRow(new Object[] {
                     task.getTitle(),

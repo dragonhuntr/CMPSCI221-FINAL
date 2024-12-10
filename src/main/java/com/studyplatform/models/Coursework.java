@@ -1,17 +1,15 @@
 package com.studyplatform.models;
 
-import java.util.Date;
-
 public class Coursework {
     private int id;
     private String name;
     private String details;
-    private Date dueDate;
+    private String dueDate;
     private String status;
 
     public Coursework() {}
 
-    public Coursework(String name, String details, Date dueDate, String status) {
+    public Coursework(String name, String details, String dueDate, String status) {
         this.name = name;
         this.details = details;
         this.dueDate = dueDate;
@@ -27,8 +25,8 @@ public class Coursework {
     public String getDetails() { return details; }
     public void setDetails(String details) { this.details = details; }
 
-    public Date getDueDate() { return dueDate; }
-    public void setDueDate(Date dueDate) { this.dueDate = dueDate; }
+    public String getDueDate() { return dueDate; }
+    public void setDueDate(String dueDate) { this.dueDate = dueDate; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

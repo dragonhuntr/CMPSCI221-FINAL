@@ -125,7 +125,7 @@ public class TaskDAO implements BaseDAO<Task> {
 
     public List<Task> findTasksDueToday(Date today) throws SQLException {
         List<Task> dueTasks = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
         String todayString = dateFormat.format(today);
 
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE due_date = ? AND status != 'COMPLETED'";

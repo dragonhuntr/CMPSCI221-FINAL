@@ -5,6 +5,8 @@ import com.studyplatform.models.Coursework;
 import com.studyplatform.util.DatabaseUtil;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
                     "study_plan_id INT, " +
                     "name VARCHAR(255), " +
                     "details VARCHAR(500), " +
-                    "due_date DATE, " +
+                    "due_date VARCHAR(50), " +
                     "status VARCHAR(50), " +
                     "FOREIGN KEY (study_plan_id) REFERENCES " + TABLE_NAME + "(id))";
             
@@ -115,7 +117,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
                 pstmt.setInt(1, studyPlan.getId());
                 pstmt.setString(2, coursework.getName());
                 pstmt.setString(3, coursework.getDetails());
-                pstmt.setDate(4, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
+                pstmt.setString(4, coursework.getDueDate());
                 pstmt.setString(5, coursework.getStatus());
                 
                 pstmt.executeUpdate();
@@ -174,7 +176,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
                     coursework.setDetails(rs.getString("details"));
                     
                     // Handle potential null date
-                    Date dueDate = rs.getDate("due_date");
+                    String dueDate = rs.getString("due_date");
                     if (dueDate != null) {
                         coursework.setDueDate(dueDate);
                     }
@@ -270,7 +272,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
             pstmt.setInt(1, studyPlanId);
             pstmt.setString(2, coursework.getName());
             pstmt.setString(3, coursework.getDetails());
-            pstmt.setDate(4, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
+            pstmt.setString(4, coursework.getDueDate());
             pstmt.setString(5, coursework.getStatus());
             
             pstmt.executeUpdate();
@@ -295,7 +297,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
             
             pstmt.setString(1, coursework.getName());
             pstmt.setString(2, coursework.getDetails());
-            pstmt.setDate(3, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
+            pstmt.setString(3, coursework.getDueDate());
             pstmt.setString(4, coursework.getStatus());
             pstmt.setInt(5, coursework.getId());
             
@@ -375,7 +377,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
             pstmt.setInt(1, studyPlan.getId());
             pstmt.setString(2, coursework.getName());
             pstmt.setString(3, coursework.getDetails());
-            pstmt.setDate(4, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
+            pstmt.setString(4, coursework.getDueDate());
             pstmt.setString(5, coursework.getStatus());
             
             pstmt.executeUpdate();
@@ -400,7 +402,7 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
             
             pstmt.setString(1, coursework.getName());
             pstmt.setString(2, coursework.getDetails());
-            pstmt.setDate(3, coursework.getDueDate() != null ? new Date(coursework.getDueDate().getTime()) : null);
+            pstmt.setString(3, coursework.getDueDate());
             pstmt.setString(4, coursework.getStatus());
             pstmt.setInt(5, coursework.getId());
             
@@ -462,5 +464,33 @@ public class StudyPlanDAO implements BaseDAO<StudyPlan> {
             }
             throw e;
         }
+    }
+
+    public List<Coursework> findCourseworkDueOnDate(Date today) throws SQLException {
+        List<Coursework> dueCourseworks = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        String todayString = dateFormat.format(today);
+    
+        String sql = "SELECT * FROM " + COURSEWORK_TABLE_NAME + " WHERE due_date = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, todayString);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Coursework coursework = new Coursework();
+                    coursework.setId(rs.getInt("id"));
+                    coursework.setName(rs.getString("name"));
+                    coursework.setDetails(rs.getString("details"));
+                    coursework.setDueDate(rs.getString("due_date"));
+                    coursework.setStatus(rs.getString("status"));
+                    
+                    dueCourseworks.add(coursework);
+                }
+            }
+        }
+        
+        return dueCourseworks;
     }
 }

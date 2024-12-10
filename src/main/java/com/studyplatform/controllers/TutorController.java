@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TutorController {
     private TutorDAO tutorDAO;
@@ -103,6 +105,20 @@ public class TutorController {
             return tutorDAO.findAll();
         } catch (SQLException e) {
             System.err.println("Error retrieving all tutors: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Tutor> findScheduledTutorsForToday(Date today) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+        String todayStr = sdf.format(today);
+
+        try {
+            return tutorDAO.findAll().stream()
+                    .filter(tutor -> tutor.isScheduled() && tutor.getAvailableDate().equals(todayStr))
+                    .collect(Collectors.toList());
+        } catch (SQLException e) {
+            System.err.println("Error finding scheduled tutors for today: " + e.getMessage());
             return new ArrayList<>();
         }
     }
