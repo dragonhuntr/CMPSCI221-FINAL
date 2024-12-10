@@ -3,26 +3,38 @@ package com.studyplatform.controllers;
 import com.studyplatform.models.Coursework;
 import com.studyplatform.models.StudyPlan;
 import com.studyplatform.dao.StudyPlanDAO;
-import com.studyplatform.dao.CourseworkDAO;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.sql.SQLException;
-import java.util.stream.Collectors;
 
 public class StudyPlanController {
     private StudyPlanDAO studyPlanDAO;
-    private CourseworkDAO courseworkDAO;
 
     public StudyPlanController() {
         this.studyPlanDAO = new StudyPlanDAO();
-        this.courseworkDAO = new CourseworkDAO();
         try {
             this.studyPlanDAO.createTable();
-            this.courseworkDAO.createTable();
         } catch (SQLException e) {
             System.err.println("Error creating study plans table: " + e.getMessage());
+        }
+    }
+
+    public void addCourse(String name) {
+        try {
+            studyPlanDAO.addCourse(name);
+        } catch (SQLException e) {
+            System.err.println("Error adding course: " + e.getMessage());
+        }
+    }
+
+    public List<String> getAllCourses() {
+        try {
+            return studyPlanDAO.getAllCourses();
+        } catch (SQLException e) {
+            System.err.println("Error retrieving courses: " + e.getMessage());
+            return java.util.Collections.emptyList();
         }
     }
 
@@ -32,6 +44,7 @@ public class StudyPlanController {
         }
 
         try {
+            // Create the study plan
             StudyPlan studyPlan = new StudyPlan(course, name);
             studyPlanDAO.create(studyPlan);
             return studyPlan;
@@ -43,15 +56,7 @@ public class StudyPlanController {
 
     public void deleteStudyPlan(String course, String studyPlanName) {
         try {
-            List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
-            StudyPlan targetPlan = coursePlans.stream()
-                    .filter(sp -> sp.getName().equals(studyPlanName))
-                    .findFirst()
-                    .orElse(null);
-            
-            if (targetPlan != null) {
-                studyPlanDAO.delete(targetPlan.getId());
-            }
+            studyPlanDAO.deleteStudyPlan(course, studyPlanName);
         } catch (SQLException e) {
             System.err.println("Error deleting study plan: " + e.getMessage());
         }
@@ -59,15 +64,38 @@ public class StudyPlanController {
 
     public List<StudyPlan> getStudyPlansForCourse(String course) {
         try {
-            return studyPlanDAO.findAll().stream()
-                    .filter(sp -> sp.getCourse().equals(course))
-                    .collect(Collectors.toList());
+            return studyPlanDAO.getStudyPlansForCourse(course);
         } catch (SQLException e) {
             System.err.println("Error retrieving study plans for course: " + e.getMessage());
             return java.util.Collections.emptyList();
         }
     }
 
+    public void addCourseworkToStudyPlan(StudyPlan studyPlan, Coursework coursework) {
+        try {
+            studyPlanDAO.addCourseworkToStudyPlan(studyPlan, coursework);
+        } catch (SQLException e) {
+            System.err.println("Error adding coursework to study plan: " + e.getMessage());
+        }
+    }
+
+    public void updateCoursework(StudyPlan studyPlan, Coursework coursework) {
+        try {
+            studyPlanDAO.updateCoursework(studyPlan, coursework);
+        } catch (SQLException e) {
+            System.err.println("Error updating coursework: " + e.getMessage());
+        }
+    }
+
+    public void removeCourseworkFromStudyPlan(StudyPlan studyPlan, Coursework coursework) {
+        try {
+            studyPlanDAO.removeCourseworkFromStudyPlan(studyPlan, coursework);
+        } catch (SQLException e) {
+            System.err.println("Error removing coursework from study plan: " + e.getMessage());
+        }
+    }
+
+    @Deprecated
     public void addCourseworkToStudyPlan(String course, String studyPlanName, 
                                          String courseworkName, String details, 
                                          Date dueDate, String status) {
@@ -80,16 +108,14 @@ public class StudyPlanController {
             
             if (targetPlan != null) {
                 Coursework coursework = new Coursework(courseworkName, details, dueDate, status);
-                courseworkDAO.create(coursework);
-                
-                targetPlan.addCoursework(coursework);
-                studyPlanDAO.update(targetPlan);
+                addCourseworkToStudyPlan(targetPlan, coursework);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Error adding coursework to study plan: " + e.getMessage());
         }
     }
 
+    @Deprecated
     public void updateCoursework(String course, String studyPlanName, 
                                  String courseworkName, String newName, 
                                  String newDetails, Date newDueDate, 
@@ -114,15 +140,15 @@ public class StudyPlanController {
                     targetCoursework.setDueDate(newDueDate);
                     targetCoursework.setStatus(newStatus);
                     
-                    courseworkDAO.update(targetCoursework);
-                    studyPlanDAO.update(targetPlan);
+                    updateCoursework(targetPlan, targetCoursework);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Error updating coursework: " + e.getMessage());
         }
     }
 
+    @Deprecated
     public void deleteCoursework(String course, String studyPlanName, String courseworkName) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
@@ -138,12 +164,10 @@ public class StudyPlanController {
                         .orElse(null);
                 
                 if (targetCoursework != null) {
-                    courseworkDAO.delete(targetCoursework.getId());
-                    targetPlan.getCourseworkList().remove(targetCoursework);
-                    studyPlanDAO.update(targetPlan);
+                    removeCourseworkFromStudyPlan(targetPlan, targetCoursework);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Error deleting coursework: " + e.getMessage());
         }
     }

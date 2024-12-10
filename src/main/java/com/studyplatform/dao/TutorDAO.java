@@ -4,7 +4,9 @@ import com.studyplatform.models.Tutor;
 import com.studyplatform.util.DatabaseUtil;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TutorDAO implements BaseDAO<Tutor> {
@@ -118,5 +120,34 @@ public class TutorDAO implements BaseDAO<Tutor> {
         }
         
         return tutors;
+    }
+
+    public List<Tutor> findTutorsAvailableToday(Date today) throws SQLException {
+        List<Tutor> availableTutors = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String todayString = dateFormat.format(today);
+
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE available_date = ? AND scheduled = false";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, todayString);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Tutor tutor = new Tutor();
+                    tutor.setId(rs.getInt("id"));
+                    tutor.setName(rs.getString("name"));
+                    tutor.setTutorClass(rs.getString("tutor_class"));
+                    tutor.setAvailableDate(rs.getString("available_date"));
+                    tutor.setLocation(rs.getString("location"));
+                    tutor.setScheduled(rs.getBoolean("scheduled"));
+                    
+                    availableTutors.add(tutor);
+                }
+            }
+        }
+        
+        return availableTutors;
     }
 }

@@ -35,4 +35,18 @@ public class StudyPlan {
     public void addCoursework(Coursework coursework) { 
         courseworkList.add(coursework); 
     }
+
+    public void removeCoursework(Coursework coursework) { 
+        courseworkList.remove(coursework); 
+    }
+
+    public void updateCoursework(Coursework coursework) {
+        // Find the existing coursework and update it
+        for (int i = 0; i < courseworkList.size(); i++) {
+            if (courseworkList.get(i).getId() == coursework.getId()) {
+                courseworkList.set(i, coursework);
+                break;
+            }
+        }
+    }
 }
