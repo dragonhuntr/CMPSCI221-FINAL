@@ -1,5 +1,7 @@
 package com.studyplatform.dao;
 
+// tutor data access object
+
 import com.studyplatform.models.Tutor;
 import com.studyplatform.util.DatabaseUtil;
 
@@ -12,9 +14,11 @@ import java.util.List;
 public class TutorDAO implements BaseDAO<Tutor> {
     private static final String TABLE_NAME = "TUTORS";
 
+    // table to store tutors
     public void createTable() throws SQLException {
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement()) {
+            // sql statement to create table with title, description, timestamp, is_read, is_deleted
             String createTableSQL = "CREATE TABLE " + TABLE_NAME + " (" +
                     "id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
                     "name VARCHAR(255), " +
@@ -26,6 +30,7 @@ public class TutorDAO implements BaseDAO<Tutor> {
         }
     }
 
+    // make new tutor in database
     @Override
     public void create(Tutor tutor) throws SQLException {
         String sql = "INSERT INTO " + TABLE_NAME + " (name, tutor_class, available_date, location, scheduled) VALUES (?, ?, ?, ?, ?)";
@@ -39,6 +44,7 @@ public class TutorDAO implements BaseDAO<Tutor> {
             
             pstmt.executeUpdate();
             
+            // get back generated id
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     tutor.setId(generatedKeys.getInt(1));
@@ -47,6 +53,7 @@ public class TutorDAO implements BaseDAO<Tutor> {
         }
     }
 
+    // find tutor by id
     @Override
     public Tutor read(int id) throws SQLException {
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
@@ -56,6 +63,7 @@ public class TutorDAO implements BaseDAO<Tutor> {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
+                    // make new tutor object
                     Tutor tutor = new Tutor();
                     tutor.setId(rs.getInt("id"));
                     tutor.setName(rs.getString("name"));
@@ -68,14 +76,17 @@ public class TutorDAO implements BaseDAO<Tutor> {
                 }
             }
         }
+        // return null if no tutor found
         return null;
     }
 
+    // update tutor in database
     @Override
     public void update(Tutor tutor) throws SQLException {
         String sql = "UPDATE " + TABLE_NAME + " SET name = ?, tutor_class = ?, available_date = ?, location = ?, scheduled = ? WHERE id = ?";
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // set all tutor details
             pstmt.setString(1, tutor.getName());
             pstmt.setString(2, tutor.getTutorClass());
             pstmt.setString(3, tutor.getAvailableDate());
@@ -83,30 +94,41 @@ public class TutorDAO implements BaseDAO<Tutor> {
             pstmt.setBoolean(5, tutor.isScheduled());
             pstmt.setInt(6, tutor.getId());
             
+            // do update magic
             pstmt.executeUpdate();
         }
     }
 
+    // delete tutor from database
     @Override
     public void delete(int id) throws SQLException {
+        // prepare sql for delete tutor
         String sql = "DELETE FROM " + TABLE_NAME + " WHERE id = ?";
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // set id parameter
             pstmt.setInt(1, id);
+            
+            // do delete magic
             pstmt.executeUpdate();
         }
     }
 
+    // get all tutors from database. return list of tutors
     @Override
     public List<Tutor> findAll() throws SQLException {
+        // make list for store tutors
         List<Tutor> tutors = new ArrayList<>();
+        // prepare sql for get all tutors
         String sql = "SELECT * FROM " + TABLE_NAME;
         
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
+            // loop through all tutors
             while (rs.next()) {
+                // make new tutor object
                 Tutor tutor = new Tutor();
                 tutor.setId(rs.getInt("id"));
                 tutor.setName(rs.getString("name"));
@@ -115,26 +137,36 @@ public class TutorDAO implements BaseDAO<Tutor> {
                 tutor.setLocation(rs.getString("location"));
                 tutor.setScheduled(rs.getBoolean("scheduled"));
                 
+                // add tutor to list
                 tutors.add(tutor);
             }
         }
         
+        // return list of tutors
         return tutors;
     }
 
+    // find tutors scheduled for today. return list of tutors
     public List<Tutor> findScheduledTutorsForToday(Date date) throws SQLException {
+        // dis be simple date format. make date string
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
         String todayString = dateFormat.format(date);
         
+        // make list for store tutors
         List<Tutor> scheduledTutors = new ArrayList<>();
+        // prepare sql for get tutors scheduled today
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE scheduled = true AND available_date = ?";
         
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // set today's date parameter
             pstmt.setString(1, todayString);
             
+            // execute query and get result
             try (ResultSet rs = pstmt.executeQuery()) {
+                // loop through all tutors
                 while (rs.next()) {
+                    // make new tutor object
                     Tutor tutor = new Tutor();
                     tutor.setId(rs.getInt("id"));
                     tutor.setName(rs.getString("name"));
@@ -143,11 +175,13 @@ public class TutorDAO implements BaseDAO<Tutor> {
                     tutor.setLocation(rs.getString("location"));
                     tutor.setScheduled(rs.getBoolean("scheduled"));
                     
+                    // add tutor to list
                     scheduledTutors.add(tutor);
                 }
             }
         }
         
+        // return list of scheduled tutors
         return scheduledTutors;
     }
 }

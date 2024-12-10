@@ -24,12 +24,10 @@ public class TutorView extends JPanel {
     private void initializeComponents() {
         setLayout(new BorderLayout());
 
-        // Top Panel: Class Dropdown
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         classDropdown = new JComboBox<>();
         classDropdown.addItem("Select a Class");
         
-        // Populate dropdown with unique classes
         List<String> uniqueClasses = tutorController.getUniqueTutorClasses();
         uniqueClasses.forEach(classDropdown::addItem);
 
@@ -38,14 +36,12 @@ public class TutorView extends JPanel {
         topPanel.add(classDropdown);
         add(topPanel, BorderLayout.NORTH);
 
-        // Session Table
         String[] columnNames = {"Name", "Available Date", "Location", "Scheduled"};
         sessionTableModel = new DefaultTableModel(columnNames, 0);
         sessionTable = new JTable(sessionTableModel);
         JScrollPane tableScrollPane = new JScrollPane(sessionTable);
         add(tableScrollPane, BorderLayout.CENTER);
 
-        // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         JButton scheduleButton = new JButton("Schedule Session");
@@ -60,16 +56,13 @@ public class TutorView extends JPanel {
     }
 
     private void updateSessionTable() {
-        // Clear existing rows
         sessionTableModel.setRowCount(0);
 
-        // Get selected class
         String selectedClass = (String) classDropdown.getSelectedItem();
         if (selectedClass == null || selectedClass.equals("Select a Class")) {
             return;
         }
 
-        // Populate table with tutors for selected class
         List<Tutor> tutors = tutorController.getTutorsByClass(selectedClass);
         for (Tutor tutor : tutors) {
             sessionTableModel.addRow(new Object[]{
@@ -88,11 +81,9 @@ public class TutorView extends JPanel {
             return;
         }
 
-        // Get tutor name from selected row
         String tutorName = (String) sessionTableModel.getValueAt(selectedRow, 0);
         
         try {
-            // Find tutor and schedule session
             Tutor tutor = tutorController.findTutorByName(tutorName);
             if (tutor != null) {
                 if (tutor.isScheduled()) {
@@ -102,7 +93,6 @@ public class TutorView extends JPanel {
 
                 tutorController.scheduleTutorSession(tutorName);
                 
-                // Refresh table
                 updateSessionTable();
                 
                 JOptionPane.showMessageDialog(this, "Session scheduled successfully.");
@@ -136,25 +126,20 @@ public class TutorView extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                // Validate and add tutor
                 String name = nameField.getText().trim();
                 String tutorClass = classField.getText().trim();
                 String availableDate = availableDateField.getText().trim();
                 String location = locationField.getText().trim();
 
-                // Validate input
                 if (name.isEmpty() || tutorClass.isEmpty() || availableDate.isEmpty() || location.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "All fields must be filled.");
                     return;
                 }
 
-                // Validate date format
                 new SimpleDateFormat("MM-dd-yyyy").parse(availableDate);
 
-                // Add tutor
                 tutorController.addTutor(name, tutorClass, availableDate, location);
 
-                // Refresh class dropdown if new class
                 List<String> classes = tutorController.getUniqueTutorClasses();
                 classDropdown.removeAllItems();
                 classDropdown.addItem("Select a Class");

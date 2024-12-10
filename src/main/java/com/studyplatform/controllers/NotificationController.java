@@ -55,7 +55,7 @@ public class NotificationController {
 
             for (Task task : dueTasks) {
                 // Check if a notification for this task already exists
-                String taskNotificationContent = task.getTitle() + "' is due today!";
+                String taskNotificationContent = task.getTitle() + " is due today!";
                 boolean notificationExists = false;
                 
                 try {
