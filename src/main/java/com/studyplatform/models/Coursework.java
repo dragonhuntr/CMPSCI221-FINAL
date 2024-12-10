@@ -1,14 +1,18 @@
+
 package com.studyplatform.models;
 
 public class Coursework {
+    // private fields for coursework properties
     private int id;
     private String name;
     private String details;
     private String dueDate;
     private String status;
 
+    // default constructor
     public Coursework() {}
 
+    // here we are parametrizing constructor to create coursework properties
     public Coursework(String name, String details, String dueDate, String status) {
         this.name = name;
         this.details = details;

@@ -1,14 +1,16 @@
+
 package com.studyplatform.views;
 
 import com.studyplatform.controllers.TaskController;
 import com.studyplatform.models.Task;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+        import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.text.ParseException;
+        import java.text.ParseException;
 
 public class TaskView extends JPanel {
+    // this is the private fields for task view components
     private TaskController taskController;
     private JTextField taskTitleField;
     private JTextField taskDescriptionField;
@@ -17,25 +19,28 @@ public class TaskView extends JPanel {
     private DefaultTableModel taskTableModel;
     private JTable taskTable;
 
+    // these are the constants for task types and status types
     private static final String[] TASK_TYPES = { "Assignment", "Project", "Homework" };
     private static final String[] STATUS_TYPES = { "Not Started", "In Progress", "Completed" };
 
+    // and this is the constructor to create task controller and components
     public TaskView(TaskController taskController) {
         this.taskController = taskController;
         initializeComponents();
     }
 
+    // now this method is to create components
     private void initializeComponents() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Task Management"));
 
-        // Task form using GridBagLayout
+        // and here we use task form using GridBagLayout
         JPanel formPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Title
+        // these are just for the title
         JLabel titleLabel = new JLabel("Title:");
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -45,7 +50,7 @@ public class TaskView extends JPanel {
         gbc.gridx = 1;
         formPanel.add(taskTitleField, gbc);
 
-        // Description
+        // these are for the description
         JLabel descriptionLabel = new JLabel("Description:");
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -55,7 +60,7 @@ public class TaskView extends JPanel {
         gbc.gridx = 1;
         formPanel.add(taskDescriptionField, gbc);
 
-        // Type
+        // this is for the type
         JLabel typeLabel = new JLabel("Type:");
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -65,7 +70,7 @@ public class TaskView extends JPanel {
         gbc.gridx = 1;
         formPanel.add(taskTypeComboBox, gbc);
 
-        // Due Date
+        // now finlly the due date
         JLabel dueDateLabel = new JLabel("Due Date:");
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -76,7 +81,7 @@ public class TaskView extends JPanel {
         gbc.gridx = 1;
         formPanel.add(taskDueDateField, gbc);
 
-        // Create Task Button
+        // this should be to create task button
         JButton createTaskButton = new JButton("Create Task");
         createTaskButton.addActionListener(e -> createTask());
         gbc.gridx = 1;
@@ -85,13 +90,13 @@ public class TaskView extends JPanel {
 
         add(formPanel, BorderLayout.NORTH);
 
-        // Task Table
+        // and then make the task table
         String[] columnNames = { "Title", "Description", "Type", "Due Date", "Status" };
         taskTableModel = new DefaultTableModel(columnNames, 0);
         taskTable = new JTable(taskTableModel);
         JScrollPane taskScrollPane = new JScrollPane(taskTable);
 
-        // Task Management Buttons
+        // these are the task management buttons
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
 
         JButton editTaskButton = new JButton("Edit Task");
@@ -108,10 +113,11 @@ public class TaskView extends JPanel {
 
         add(tablePanel, BorderLayout.CENTER);
 
-        // Populate initial tasks
+        // and the input initial tasks
         refreshTaskTable();
     }
 
+    // this method is to create a new task
     private void createTask() {
         try {
             String title = taskTitleField.getText();
@@ -122,24 +128,25 @@ public class TaskView extends JPanel {
 
             taskController.createTask(title, description, type, dueDateStr, status);
 
-            // Clear input fields
+            // this is to clear input fields
             taskTitleField.setText("");
             taskDescriptionField.setText("");
             taskDueDateField.setText("");
 
-            // Refresh table
+            // and then refresh table
             refreshTaskTable();
         } catch (ParseException ex) {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
         }
     }
 
+    // this method is to edit an existing task
     private void editTask() {
         int selectedRow = taskTable.getSelectedRow();
         if (selectedRow >= 0) {
             Task selectedTask = taskController.getAllTasks().get(selectedRow);
 
-            // Create input panel for editing
+            // and then create input panel for editing
             JTextField titleField = new JTextField(selectedTask.getTitle());
             JTextField descriptionField = new JTextField(selectedTask.getDescription());
             JComboBox<String> typeComboBox = new JComboBox<>(TASK_TYPES);
@@ -184,6 +191,7 @@ public class TaskView extends JPanel {
         }
     }
 
+    // now this method is to delete a task
     private void deleteTask() {
         int selectedRow = taskTable.getSelectedRow();
         if (selectedRow >= 0) {
@@ -196,10 +204,12 @@ public class TaskView extends JPanel {
         }
     }
 
+    //  and this method is to refresh the task table
     private void refreshTaskTable() {
-        // Clear existing rows
+        // clear existing rows
         taskTableModel.setRowCount(0);
 
+        // and then this for loop adds tasks to the table model
         for (Task task : taskController.getAllTasks()) {
             taskTableModel.addRow(new Object[] {
                     task.getTitle(),

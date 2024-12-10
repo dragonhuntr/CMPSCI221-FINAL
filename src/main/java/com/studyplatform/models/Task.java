@@ -1,6 +1,8 @@
+
 package com.studyplatform.models;
 
 public class Task {
+    // these are some private fields for task properties
     private int id;
     private String title;
     private String description;
@@ -8,8 +10,10 @@ public class Task {
     private String dueDate;
     private String status;
 
+    // default constructor for task
     public Task() {}
 
+    // parameterize constructor to initialize task properties
     public Task(String title, String description, String type, String dueDate, String status) {
         this.title = title;
         this.description = description;
@@ -21,7 +25,6 @@ public class Task {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    // Getters and Setters
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 

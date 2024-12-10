@@ -9,9 +9,11 @@ import java.util.stream.Collectors;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+// this should be able to handles operations related to tutors and their sessions.
 public class TutorController {
     private TutorDAO tutorDAO;
 
+    //this should be able to initialize dao and put initial tutors during initialization.
     public TutorController() {
         this.tutorDAO = new TutorDAO();
         try {
@@ -22,6 +24,7 @@ public class TutorController {
         }
     }
 
+    // here we should be able to put the database with default tutor entries if there are none
     private void populateInitialTutors() {
         try {
             List<Tutor> existingTutors = tutorDAO.findAll();
@@ -42,6 +45,7 @@ public class TutorController {
         }
     }
 
+    // this should add a new tutor to the database.
     public Tutor addTutor(String name, String tutorClass, String availableDate, String location) {
         try {
             Tutor tutor = new Tutor(name, tutorClass, availableDate, location, false);
@@ -53,6 +57,7 @@ public class TutorController {
         }
     }
 
+    // this should schedule a session for a specific tutor.
     public void scheduleTutorSession(String tutorName) {
         try {
             Tutor tutor = findTutorByName(tutorName);
@@ -65,6 +70,7 @@ public class TutorController {
         }
     }
 
+    // this should get tutors teaching a specific class.
     public List<Tutor> getTutorsByClass(String tutorClass) {
         try {
             return tutorDAO.findAll().stream()
@@ -76,6 +82,7 @@ public class TutorController {
         }
     }
 
+    // this should find a specific tutor by their name.
     public Tutor findTutorByName(String name) {
         try {
             return tutorDAO.findAll().stream()
@@ -88,6 +95,7 @@ public class TutorController {
         }
     }
 
+    // this shoudl get a list of all unique classes taught by tutors.
     public List<String> getUniqueTutorClasses() {
         try {
             return tutorDAO.findAll().stream()
@@ -100,6 +108,7 @@ public class TutorController {
         }
     }
 
+    // this should get all tutors from the database.
     public List<Tutor> getAllTutors() {
         try {
             return tutorDAO.findAll();
@@ -109,6 +118,7 @@ public class TutorController {
         }
     }
 
+    // this function should be able to find tutors scheduled for today.
     public List<Tutor> findScheduledTutorsForToday(Date today) {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
         String todayStr = sdf.format(today);

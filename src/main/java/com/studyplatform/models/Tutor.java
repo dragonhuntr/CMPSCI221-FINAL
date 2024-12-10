@@ -1,6 +1,8 @@
+
 package com.studyplatform.models;
 
 public class Tutor {
+    // here are the private fields for tutor properties
     private int id;
     private String name;
     private String tutorClass;
@@ -8,8 +10,10 @@ public class Tutor {
     private String location;
     private boolean scheduled;
 
+    // and this is a default constructor
     public Tutor() {}
 
+    // and here we would need to parameterize constructor to initialize tutor properties
     public Tutor(String name, String tutorClass, String availableDate, String location, boolean scheduled) {
         this.name = name;
         this.tutorClass = tutorClass;

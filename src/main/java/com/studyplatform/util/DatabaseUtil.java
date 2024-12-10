@@ -8,7 +8,7 @@ public class DatabaseUtil {
     private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
     private static final String DB_URL = "jdbc:derby:studydb;create=true;";
 
-    // Static initializer to load Derby driver
+    // this is a static initializer to load derby driver
     static {
         try {
             Class.forName(DRIVER);
@@ -18,10 +18,10 @@ public class DatabaseUtil {
         }
     }
 
-    // Private constructor to prevent instantiation
+    // and here we would need to private constructor to prevent instantiation
     private DatabaseUtil() {}
 
-    // Always return a new connection
+    // and her we need to rememeber to always return a new connection
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL);
     }

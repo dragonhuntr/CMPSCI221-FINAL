@@ -1,3 +1,4 @@
+
 package com.studyplatform.controllers;
 
 import com.studyplatform.models.Coursework;
@@ -12,6 +13,8 @@ import java.sql.SQLException;
 public class StudyPlanController {
     private StudyPlanDAO studyPlanDAO;
 
+    // here I am going to have a constructor initializes the StudyPlanDAO
+    // and creates the study plans table if it doesn't exist
     public StudyPlanController() {
         this.studyPlanDAO = new StudyPlanDAO();
         try {
@@ -21,6 +24,7 @@ public class StudyPlanController {
         }
     }
 
+    // this should add a new course to the study plan
     public void addCourse(String name) {
         try {
             studyPlanDAO.addCourse(name);
@@ -29,6 +33,7 @@ public class StudyPlanController {
         }
     }
 
+    // here I should be able to retrieves all courses from the study plan
     public List<String> getAllCourses() {
         try {
             return studyPlanDAO.getAllCourses();
@@ -38,13 +43,15 @@ public class StudyPlanController {
         }
     }
 
+    // here we should be able to creates a new study plan
+    // for a given course and name
     public StudyPlan createStudyPlan(String course, String name) {
         if (course == null || course.trim().isEmpty() || name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Course and name cannot be empty.");
         }
 
         try {
-            // Create the study plan
+            // this should create the study plan
             StudyPlan studyPlan = new StudyPlan(course, name);
             studyPlanDAO.create(studyPlan);
             return studyPlan;
@@ -54,6 +61,9 @@ public class StudyPlanController {
         }
     }
 
+    // We would also need a feature to delete the study plan
+    // So here, we should be able to deletes a study plan
+    // for a given course and study plan name
     public void deleteStudyPlan(String course, String studyPlanName) {
         try {
             studyPlanDAO.deleteStudyPlan(course, studyPlanName);
@@ -62,6 +72,7 @@ public class StudyPlanController {
         }
     }
 
+    // this function should retrieve all study plans for a given course
     public List<StudyPlan> getStudyPlansForCourse(String course) {
         try {
             return studyPlanDAO.getStudyPlansForCourse(course);
@@ -71,6 +82,8 @@ public class StudyPlanController {
         }
     }
 
+    // this is a simple function to add coursework
+    // adds coursework to a specific study plan
     public void addCourseworkToStudyPlan(StudyPlan studyPlan, Coursework coursework) {
         try {
             studyPlanDAO.addCourseworkToStudyPlan(studyPlan, coursework);
@@ -79,6 +92,7 @@ public class StudyPlanController {
         }
     }
 
+    // this should be able to updates coursework in a specific study plan
     public void updateCoursework(StudyPlan studyPlan, Coursework coursework) {
         try {
             studyPlanDAO.updateCoursework(studyPlan, coursework);
@@ -87,6 +101,8 @@ public class StudyPlanController {
         }
     }
 
+    // we should also be able to remove coursework
+    // so here we remove coursework from a specific study plan
     public void removeCourseworkFromStudyPlan(StudyPlan studyPlan, Coursework coursework) {
         try {
             studyPlanDAO.removeCourseworkFromStudyPlan(studyPlan, coursework);
@@ -95,9 +111,10 @@ public class StudyPlanController {
         }
     }
 
-    @Deprecated
-    public void addCourseworkToStudyPlan(String course, String studyPlanName, 
-                                         String courseworkName, String details, 
+    // this function should be able to deny method to
+    // add coursework to a study plan using string parameters
+    public void addCourseworkToStudyPlan(String course, String studyPlanName,
+                                         String courseworkName, String details,
                                          String dueDate, String status) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
@@ -105,7 +122,7 @@ public class StudyPlanController {
                     .filter(sp -> sp.getName().equals(studyPlanName))
                     .findFirst()
                     .orElse(null);
-            
+
             if (targetPlan != null) {
                 Coursework coursework = new Coursework(courseworkName, details, dueDate, status);
                 addCourseworkToStudyPlan(targetPlan, coursework);
@@ -115,10 +132,11 @@ public class StudyPlanController {
         }
     }
 
-    @Deprecated
-    public void updateCoursework(String course, String studyPlanName, 
-                                 String courseworkName, String newName, 
-                                 String newDetails, String newDueDate, 
+    // this should be able to update that denied method to
+    // update coursework in a study plan using string parameters
+    public void updateCoursework(String course, String studyPlanName,
+                                 String courseworkName, String newName,
+                                 String newDetails, String newDueDate,
                                  String newStatus) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
@@ -126,20 +144,20 @@ public class StudyPlanController {
                     .filter(sp -> sp.getName().equals(studyPlanName))
                     .findFirst()
                     .orElse(null);
-            
+
             if (targetPlan != null) {
                 List<Coursework> courseworkList = targetPlan.getCourseworkList();
                 Coursework targetCoursework = courseworkList.stream()
                         .filter(cw -> cw.getName().equals(courseworkName))
                         .findFirst()
                         .orElse(null);
-                
+
                 if (targetCoursework != null) {
                     targetCoursework.setName(newName);
                     targetCoursework.setDetails(newDetails);
                     targetCoursework.setDueDate(newDueDate);
                     targetCoursework.setStatus(newStatus);
-                    
+
                     updateCoursework(targetPlan, targetCoursework);
                 }
             }
@@ -148,7 +166,8 @@ public class StudyPlanController {
         }
     }
 
-    @Deprecated
+    // this function should  be able to deny method to
+    // delete coursework from a study plan using string parameters
     public void deleteCoursework(String course, String studyPlanName, String courseworkName) {
         try {
             List<StudyPlan> coursePlans = getStudyPlansForCourse(course);
@@ -156,13 +175,13 @@ public class StudyPlanController {
                     .filter(sp -> sp.getName().equals(studyPlanName))
                     .findFirst()
                     .orElse(null);
-            
+
             if (targetPlan != null) {
                 Coursework targetCoursework = targetPlan.getCourseworkList().stream()
                         .filter(cw -> cw.getName().equals(courseworkName))
                         .findFirst()
                         .orElse(null);
-                
+
                 if (targetCoursework != null) {
                     removeCourseworkFromStudyPlan(targetPlan, targetCoursework);
                 }
@@ -172,15 +191,16 @@ public class StudyPlanController {
         }
     }
 
+    // this should retrieve all study plans grouped by course
     public Map<String, List<StudyPlan>> getAllStudyPlans() {
         try {
             List<StudyPlan> allPlans = studyPlanDAO.findAll();
             Map<String, List<StudyPlan>> groupedPlans = new HashMap<>();
-            
+
             for (StudyPlan plan : allPlans) {
                 groupedPlans.computeIfAbsent(plan.getCourse(), k -> new java.util.ArrayList<>()).add(plan);
             }
-            
+
             return groupedPlans;
         } catch (SQLException e) {
             System.err.println("Error retrieving all study plans: " + e.getMessage());

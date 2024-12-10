@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+// this is the class definition for the study plan view
 public class StudyPlanView extends JPanel {
     private StudyPlanController studyPlanController;
     private DefaultListModel<String> courseListModel;
@@ -20,17 +21,19 @@ public class StudyPlanView extends JPanel {
     private JTable courseworkTable;
     private DefaultTableModel courseworkTableModel;
 
+    // this is the study plan view contoller
     public StudyPlanView(StudyPlanController studyPlanController) {
         this.studyPlanController = studyPlanController;
         initializeComponents();
         loadExistingCourses();
     }
 
+    // here we are initializing/creating the components for the class
     private void initializeComponents() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Study Plan Management"));
 
-        // Course List
+        // these are all the course list
         courseListModel = new DefaultListModel<>();
         courseList = new JList<>(courseListModel);
         courseList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -40,7 +43,7 @@ public class StudyPlanView extends JPanel {
         leftPanel.setBorder(BorderFactory.createTitledBorder("Courses"));
         leftPanel.add(courseScrollPane, BorderLayout.CENTER);
 
-        // Course Management Buttons
+        // and here we are making the course management buttons
         JPanel courseButtonPanel = new JPanel(new GridLayout(1, 2));
         JButton addCourseButton = new JButton("Add Course");
         addCourseButton.addActionListener(e -> addCourse());
@@ -50,7 +53,7 @@ public class StudyPlanView extends JPanel {
         courseButtonPanel.add(deleteCourseButton);
         leftPanel.add(courseButtonPanel, BorderLayout.SOUTH);
 
-        // Study Plan List
+        // here we added the study plan list
         studyPlanListModel = new DefaultListModel<>();
         studyPlanList = new JList<>(studyPlanListModel);
         JScrollPane studyPlanScrollPane = new JScrollPane(studyPlanList);
@@ -59,7 +62,7 @@ public class StudyPlanView extends JPanel {
         rightPanel.setBorder(BorderFactory.createTitledBorder("Study Plans"));
         rightPanel.add(studyPlanScrollPane, BorderLayout.CENTER);
 
-        // Study Plan Management Buttons
+        // and here we need the study plan management buttons
         JPanel studyPlanButtonPanel = new JPanel(new GridLayout(1, 3));
         JButton addStudyPlanButton = new JButton("Add Study Plan");
         addStudyPlanButton.addActionListener(e -> addStudyPlan());
@@ -72,19 +75,20 @@ public class StudyPlanView extends JPanel {
         studyPlanButtonPanel.add(deleteStudyPlanButton);
         rightPanel.add(studyPlanButtonPanel, BorderLayout.SOUTH);
 
-        // Course Selection Listener
+        // this will include the course Selection Listener
         courseList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 updateStudyPlanList();
             }
         });
 
-        // Split Pane
+        // this will be the split pane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         splitPane.setDividerLocation(300);
         add(splitPane, BorderLayout.CENTER);
     }
 
+    // this will add the courses
     private void addCourse() {
         String courseName = JOptionPane.showInputDialog(this, "Enter course name:");
         if (courseName != null && !courseName.trim().isEmpty()) {
@@ -93,6 +97,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // this will delete those courses
     private void deleteCourse() {
         String selectedCourse = courseList.getSelectedValue();
         if (selectedCourse != null) {
@@ -101,6 +106,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // this will add the selteched course to the study plan
     private void addStudyPlan() {
         String selectedCourse = courseList.getSelectedValue();
         if (selectedCourse != null) {
@@ -112,6 +118,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // here using this function you can view the study plan
     private void viewStudyPlan() {
         String selectedCourse = courseList.getSelectedValue();
         String selectedStudyPlan = studyPlanList.getSelectedValue();
@@ -129,6 +136,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // here you can delete the same study plan
     private void deleteStudyPlan() {
         String selectedCourse = courseList.getSelectedValue();
         String selectedStudyPlan = studyPlanList.getSelectedValue();
@@ -139,6 +147,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // here we can update that same study plan
     private void updateStudyPlanList() {
         String selectedCourse = courseList.getSelectedValue();
         studyPlanListModel.clear();
@@ -151,22 +160,23 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // now we can show all the course work using this fucntion
     private void showCourseworkManagementDialog(StudyPlan studyPlan) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), 
                                      "Manage Coursework for " + studyPlan.getName(), 
                                      true);
         dialog.setSize(600, 400);
 
-        // Coursework Table
+        // this is all the coursework table
         String[] columnNames = {"Name", "Details", "Due Date", "Status"};
         courseworkTableModel = new DefaultTableModel(columnNames, 0);
         courseworkTable = new JTable(courseworkTableModel);
         JScrollPane tableScrollPane = new JScrollPane(courseworkTable);
 
-        // Populate table
+        // this will add things to the table
         refreshCourseworkTable(studyPlan);
 
-        // Button Panel
+        // these are just the button panel
         JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
         JButton addButton = new JButton("Add Coursework");
         addButton.addActionListener(e -> addCoursework(studyPlan));
@@ -179,7 +189,7 @@ public class StudyPlanView extends JPanel {
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
 
-        // Layout
+        // this is for the layout
         dialog.setLayout(new BorderLayout());
         dialog.add(tableScrollPane, BorderLayout.CENTER);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
@@ -188,6 +198,7 @@ public class StudyPlanView extends JPanel {
         dialog.setVisible(true);
     }
 
+    // this will refresh the coursework table from the study plan
     private void refreshCourseworkTable(StudyPlan studyPlan) {
         courseworkTableModel.setRowCount(0);
 
@@ -201,6 +212,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // this function should allow me to add the course work
     private void addCoursework(StudyPlan studyPlan) {
         JPanel inputPanel = new JPanel(new GridLayout(4, 2));
         JTextField nameField = new JTextField();
@@ -223,7 +235,7 @@ public class StudyPlanView extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                // Validate inputs
+                // this is for Validate inputs
                 String name = nameField.getText().trim();
                 if (name.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Coursework name cannot be empty.");
@@ -243,17 +255,17 @@ public class StudyPlanView extends JPanel {
                     }
                 }
 
-                // Create coursework
+                // this should allow me to create coursework
                 Coursework coursework = new Coursework();
                 coursework.setName(name);
                 coursework.setDetails(detailsField.getText().trim());
                 coursework.setDueDate(dueDate);
                 coursework.setStatus((String) statusComboBox.getSelectedItem());
 
-                // Add to study plan via controller
+                // and her we can add to study plan via controller
                 studyPlanController.addCourseworkToStudyPlan(studyPlan, coursework);
 
-                // Refresh table
+                // this should simply refresh table
                 refreshCourseworkTable(studyPlan);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error adding coursework: " + ex.getMessage());
@@ -261,6 +273,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // here we should be able to edit the coursework
     private void editCoursework(StudyPlan studyPlan) {
         int selectedRow = courseworkTable.getSelectedRow();
         if (selectedRow < 0) {
@@ -268,14 +281,14 @@ public class StudyPlanView extends JPanel {
             return;
         }
 
-        // Get the selected coursework
+        // we should ne able to get the selected coursework
         Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
 
         JPanel inputPanel = new JPanel(new GridLayout(4, 2));
         JTextField nameField = new JTextField(selectedCoursework.getName());
         JTextField detailsField = new JTextField(selectedCoursework.getDetails() == null ? "" : selectedCoursework.getDetails());
         
-        // Format due date if exists
+        // and then format due date if exists
         JTextField dueDateField = new JTextField();
         if (selectedCoursework.getDueDate() != null) {
             dueDateField.setText(new SimpleDateFormat("MM-dd-yyyy").format(selectedCoursework.getDueDate()));
@@ -299,14 +312,14 @@ public class StudyPlanView extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                // Validate inputs
+                // this will validate inputs
                 String name = nameField.getText().trim();
                 if (name.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Coursework name cannot be empty.");
                     return;
                 }
 
-                // Parse due date
+                // and then parse due date
                 String dueDate = dueDateField.getText().trim();
 
                 if (!dueDate.isEmpty()) {
@@ -320,16 +333,16 @@ public class StudyPlanView extends JPanel {
                     }
                 }
 
-                // Update coursework
+                // this should update coursework
                 selectedCoursework.setName(name);
                 selectedCoursework.setDetails(detailsField.getText().trim());
                 selectedCoursework.setDueDate(dueDate);
                 selectedCoursework.setStatus((String) statusComboBox.getSelectedItem());
 
-                // Update via controller
+                // and then update via controller
                 studyPlanController.updateCoursework(studyPlan, selectedCoursework);
 
-                // Refresh table
+                // then Refresh table entierly
                 refreshCourseworkTable(studyPlan);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error updating coursework: " + ex.getMessage());
@@ -337,6 +350,7 @@ public class StudyPlanView extends JPanel {
         }
     }
 
+    // this should delete the course work
     private void deleteCoursework(StudyPlan studyPlan) {
         int selectedRow = courseworkTable.getSelectedRow();
         if (selectedRow < 0) {
@@ -344,7 +358,7 @@ public class StudyPlanView extends JPanel {
             return;
         }
 
-        // Get the selected coursework
+        // and here we get the selected coursework
         Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
 
         int confirm = JOptionPane.showConfirmDialog(
@@ -367,10 +381,10 @@ public class StudyPlanView extends JPanel {
         }
     }
 
-    // Add this method to load existing courses when the view is initialized
+    // and after we add this method to load existing courses when the view is created
     public void loadExistingCourses() {
         try {
-            // Fetch courses from the database
+            // then fetch courses from the database
             List<String> courses = studyPlanController.getAllCourses();
             courseListModel.clear();
             for (String course : courses) {

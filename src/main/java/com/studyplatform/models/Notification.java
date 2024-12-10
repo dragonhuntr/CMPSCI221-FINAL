@@ -1,8 +1,10 @@
+
 package com.studyplatform.models;
 
 import java.util.Date;
 
 public class Notification {
+    // these are the private fields for notification properties
     private int id;
     private String title;
     private String description;
@@ -10,11 +12,14 @@ public class Notification {
     private boolean isRead;
     private boolean isDeleted;
 
+    // this is the default constructor initializing timestamp and isRead
     public Notification() {
         this.timestamp = new Date();
         this.isRead = false;
     }
 
+    // here we would need to parameterize constructor to create
+    // title, description, timestamp, isRead, and isDeleted
     public Notification(String title, String description) {
         this.title = title;
         this.description = description;
