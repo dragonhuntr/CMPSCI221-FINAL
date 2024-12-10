@@ -4,7 +4,9 @@ import com.studyplatform.models.Task;
 import com.studyplatform.util.DatabaseUtil;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TaskDAO implements BaseDAO<Task> {
@@ -13,8 +15,8 @@ public class TaskDAO implements BaseDAO<Task> {
     public void createTable() throws SQLException {
         try (Connection conn = DatabaseUtil.getConnection();
              Statement stmt = conn.createStatement()) {
-            // Use CREATE TABLE IF NOT EXISTS to prevent errors if table already exists
-            String createTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+            // Use CREATE TABLE to prevent errors if table already exists
+            String createTableSQL = "CREATE TABLE " + TABLE_NAME + " (" +
                     "id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
                     "title VARCHAR(255), " +
                     "description VARCHAR(1000), " +
@@ -22,12 +24,6 @@ public class TaskDAO implements BaseDAO<Task> {
                     "due_date VARCHAR(50), " +
                     "status VARCHAR(50))";
             stmt.execute(createTableSQL);
-        } catch (SQLException e) {
-            // Log the error, but don't rethrow if it's just about table already existing
-            if (!e.getSQLState().equals("X0Y32")) {  // Derby's code for table already existing
-                System.err.println("Error creating tasks table: " + e.getMessage());
-                throw e;
-            }
         }
     }
 
@@ -125,5 +121,34 @@ public class TaskDAO implements BaseDAO<Task> {
         }
         
         return tasks;
+    }
+
+    public List<Task> findTasksDueToday(Date today) throws SQLException {
+        List<Task> dueTasks = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String todayString = dateFormat.format(today);
+
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE due_date = ? AND status != 'COMPLETED'";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, todayString);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Task task = new Task();
+                    task.setId(rs.getInt("id"));
+                    task.setTitle(rs.getString("title"));
+                    task.setDescription(rs.getString("description"));
+                    task.setType(rs.getString("type"));
+                    task.setDueDate(rs.getString("due_date"));
+                    task.setStatus(rs.getString("status"));
+                    
+                    dueTasks.add(task);
+                }
+            }
+        }
+        
+        return dueTasks;
     }
 }

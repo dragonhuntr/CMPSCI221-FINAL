@@ -27,7 +27,6 @@ public class GroupController {
         }
 
         try {
-            // Check if group already exists
             List<Group> existingGroups = groupDAO.findAll();
             boolean groupExists = existingGroups.stream()
                     .anyMatch(g -> g.getName().equals(groupName));

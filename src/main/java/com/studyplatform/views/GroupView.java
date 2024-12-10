@@ -59,6 +59,9 @@ public class GroupView extends JPanel {
         groupListPanel = new JPanel(new GridLayout(0, 1));
         JScrollPane groupScrollPane = new JScrollPane(groupListPanel);
         add(groupScrollPane, BorderLayout.CENTER);
+
+        // Update initial group list
+        updateGroupList();
     }
 
     private void createGroup() {
@@ -195,6 +198,15 @@ public class GroupView extends JPanel {
 
     private void downloadFile(Group group) {
         JOptionPane.showMessageDialog(this, "Downloading file for group: " + group.getName());
+    }
+
+    private void updateGroupList() {
+        groupListPanel.removeAll();
+        for (Group group : groupController.getAllGroups().values()) {
+            addGroupToList(group);
+        }
+        groupListPanel.revalidate();
+        groupListPanel.repaint();
     }
 
     private void updateGroupDetails(Group group, JTextArea groupDetails) {

@@ -24,6 +24,7 @@ public class StudyPlanView extends JPanel {
     public StudyPlanView(StudyPlanController studyPlanController) {
         this.studyPlanController = studyPlanController;
         initializeComponents();
+        loadExistingCourses();
     }
 
     private void initializeComponents() {
@@ -88,6 +89,7 @@ public class StudyPlanView extends JPanel {
     private void addCourse() {
         String courseName = JOptionPane.showInputDialog(this, "Enter course name:");
         if (courseName != null && !courseName.trim().isEmpty()) {
+            studyPlanController.addCourse(courseName);
             courseListModel.addElement(courseName);
         }
     }
@@ -202,126 +204,179 @@ public class StudyPlanView extends JPanel {
     }
 
     private void addCoursework(StudyPlan studyPlan) {
-        JPanel inputPanel = createCourseworkInputPanel(null);
-        
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+        JTextField nameField = new JTextField();
+        JTextField detailsField = new JTextField();
+        JTextField dueDateField = new JTextField();
+        String[] statusTypes = {"Not Started", "In Progress", "Completed"};
+        JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
+
+        inputPanel.add(new JLabel("Name:"));
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Details:"));
+        inputPanel.add(detailsField);
+        inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
+        inputPanel.add(dueDateField);
+        inputPanel.add(new JLabel("Status:"));
+        inputPanel.add(statusComboBox);
+
         int result = JOptionPane.showConfirmDialog(
                 this, inputPanel, "Add Coursework", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                String name = ((JTextField)inputPanel.getComponent(1)).getText().trim();
-                String details = ((JTextField)inputPanel.getComponent(3)).getText().trim();
-                String dueDateStr = ((JTextField)inputPanel.getComponent(5)).getText().trim();
-                String status = (String)((JComboBox<?>)inputPanel.getComponent(7)).getSelectedItem();
-
-                Date dueDate = null;
-                if (!dueDateStr.isEmpty()) {
-                    dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateStr);
+                // Validate inputs
+                String name = nameField.getText().trim();
+                if (name.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Coursework name cannot be empty.");
+                    return;
                 }
 
-                studyPlanController.addCourseworkToStudyPlan(
-                    studyPlan.getCourse(), 
-                    studyPlan.getName(), 
-                    name, 
-                    details, 
-                    dueDate, 
-                    status
-                );
+                // Parse due date
+                Date dueDate = null;
+                String dueDateText = dueDateField.getText().trim();
+                if (!dueDateText.isEmpty()) {
+                    try {
+                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateText);
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Use MM-dd-yyyy.");
+                        return;
+                    }
+                }
 
+                // Create coursework
+                Coursework coursework = new Coursework();
+                coursework.setName(name);
+                coursework.setDetails(detailsField.getText().trim());
+                coursework.setDueDate(dueDate);
+                coursework.setStatus((String) statusComboBox.getSelectedItem());
+
+                // Add to study plan via controller
+                studyPlanController.addCourseworkToStudyPlan(studyPlan, coursework);
+
+                // Refresh table
                 refreshCourseworkTable(studyPlan);
-            } catch (ParseException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error adding coursework: " + ex.getMessage());
             }
         }
     }
 
     private void editCoursework(StudyPlan studyPlan) {
         int selectedRow = courseworkTable.getSelectedRow();
-        if (selectedRow >= 0) {
-            Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a coursework to edit.");
+            return;
+        }
 
-            JPanel inputPanel = createCourseworkInputPanel(selectedCoursework);
-            
-            int result = JOptionPane.showConfirmDialog(
-                    this, inputPanel, "Edit Coursework", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        // Get the selected coursework
+        Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
 
-            if (result == JOptionPane.OK_OPTION) {
-                try {
-                    String name = ((JTextField)inputPanel.getComponent(1)).getText().trim();
-                    String details = ((JTextField)inputPanel.getComponent(3)).getText().trim();
-                    String dueDateStr = ((JTextField)inputPanel.getComponent(5)).getText().trim();
-                    String status = (String)((JComboBox<?>)inputPanel.getComponent(7)).getSelectedItem();
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+        JTextField nameField = new JTextField(selectedCoursework.getName());
+        JTextField detailsField = new JTextField(selectedCoursework.getDetails() == null ? "" : selectedCoursework.getDetails());
+        
+        // Format due date if exists
+        JTextField dueDateField = new JTextField();
+        if (selectedCoursework.getDueDate() != null) {
+            dueDateField.setText(new SimpleDateFormat("MM-dd-yyyy").format(selectedCoursework.getDueDate()));
+        }
 
-                    Date dueDate = null;
-                    if (!dueDateStr.isEmpty()) {
-                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateStr);
-                    }
+        String[] statusTypes = {"Not Started", "In Progress", "Completed"};
+        JComboBox<String> statusComboBox = new JComboBox<>(statusTypes);
+        statusComboBox.setSelectedItem(selectedCoursework.getStatus());
 
-                    studyPlanController.updateCoursework(
-                        studyPlan.getCourse(), 
-                        studyPlan.getName(), 
-                        selectedCoursework.getName(), 
-                        name, 
-                        details, 
-                        dueDate, 
-                        status
-                    );
+        inputPanel.add(new JLabel("Name:"));
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Details:"));
+        inputPanel.add(detailsField);
+        inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
+        inputPanel.add(dueDateField);
+        inputPanel.add(new JLabel("Status:"));
+        inputPanel.add(statusComboBox);
 
-                    refreshCourseworkTable(studyPlan);
-                } catch (ParseException ex) {
-                    JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+        int result = JOptionPane.showConfirmDialog(
+                this, inputPanel, "Edit Coursework", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                // Validate inputs
+                String name = nameField.getText().trim();
+                if (name.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Coursework name cannot be empty.");
+                    return;
                 }
+
+                // Parse due date
+                Date dueDate = null;
+                String dueDateText = dueDateField.getText().trim();
+                if (!dueDateText.isEmpty()) {
+                    try {
+                        dueDate = new SimpleDateFormat("MM-dd-yyyy").parse(dueDateText);
+                    } catch (ParseException ex) {
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Use MM-dd-yyyy.");
+                        return;
+                    }
+                }
+
+                // Update coursework
+                selectedCoursework.setName(name);
+                selectedCoursework.setDetails(detailsField.getText().trim());
+                selectedCoursework.setDueDate(dueDate);
+                selectedCoursework.setStatus((String) statusComboBox.getSelectedItem());
+
+                // Update via controller
+                studyPlanController.updateCoursework(studyPlan, selectedCoursework);
+
+                // Refresh table
+                refreshCourseworkTable(studyPlan);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error updating coursework: " + ex.getMessage());
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "No coursework selected.");
         }
     }
 
     private void deleteCoursework(StudyPlan studyPlan) {
         int selectedRow = courseworkTable.getSelectedRow();
-        if (selectedRow >= 0) {
-            Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
-            
-            studyPlanController.deleteCoursework(
-                studyPlan.getCourse(), 
-                studyPlan.getName(), 
-                selectedCoursework.getName()
-            );
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a coursework to delete.");
+            return;
+        }
 
-            refreshCourseworkTable(studyPlan);
-        } else {
-            JOptionPane.showMessageDialog(this, "No coursework selected.");
+        // Get the selected coursework
+        Coursework selectedCoursework = studyPlan.getCourseworkList().get(selectedRow);
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this, 
+                "Are you sure you want to delete this coursework?", 
+                "Confirm Deletion", 
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                // Delete via controller
+                studyPlanController.removeCourseworkFromStudyPlan(studyPlan, selectedCoursework);
+
+                // Refresh table
+                refreshCourseworkTable(studyPlan);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting coursework: " + ex.getMessage());
+            }
         }
     }
 
-    private JPanel createCourseworkInputPanel(Coursework coursework) {
-        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
-        
-        // Name
-        inputPanel.add(new JLabel("Name:"));
-        JTextField nameField = new JTextField(coursework != null ? coursework.getName() : "");
-        inputPanel.add(nameField);
-
-        // Details
-        inputPanel.add(new JLabel("Details:"));
-        JTextField detailsField = new JTextField(coursework != null ? 
-                (coursework.getDetails() != null ? coursework.getDetails() : "") : "");
-        inputPanel.add(detailsField);
-
-        // Due Date
-        inputPanel.add(new JLabel("Due Date (MM-dd-yyyy):"));
-        JTextField dueDateField = new JTextField(coursework != null && coursework.getDueDate() != null ? 
-                new SimpleDateFormat("MM-dd-yyyy").format(coursework.getDueDate()) : "");
-        inputPanel.add(dueDateField);
-
-        // Status
-        inputPanel.add(new JLabel("Status:"));
-        JComboBox<String> statusComboBox = new JComboBox<>(new String[]{"Not Started", "In Progress", "Completed"});
-        if (coursework != null && coursework.getStatus() != null) {
-            statusComboBox.setSelectedItem(coursework.getStatus());
+    // Add this method to load existing courses when the view is initialized
+    public void loadExistingCourses() {
+        try {
+            // Fetch courses from the database
+            List<String> courses = studyPlanController.getAllCourses();
+            courseListModel.clear();
+            for (String course : courses) {
+                courseListModel.addElement(course);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error loading courses: " + ex.getMessage());
         }
-        inputPanel.add(statusComboBox);
-
-        return inputPanel;
     }
 }
