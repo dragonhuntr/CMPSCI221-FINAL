@@ -8,6 +8,7 @@ public class Notification {
     private String description;
     private Date timestamp;
     private boolean isRead;
+    private boolean isDeleted;
 
     public Notification() {
         this.timestamp = new Date();
@@ -19,6 +20,7 @@ public class Notification {
         this.description = description;
         this.timestamp = new Date();
         this.isRead = false;
+        this.isDeleted = false;
     }
 
     public int getId() { return id; }
@@ -31,7 +33,11 @@ public class Notification {
     public void setDescription(String description) { this.description = description; }
 
     public Date getTimestamp() { return timestamp; }
+    public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
 
     public boolean isRead() { return isRead; }
     public void markAsRead() { this.isRead = true; }
+
+    public boolean isDeleted() { return isDeleted; }
+    public void markAsDeleted() { this.isDeleted = true; }
 }

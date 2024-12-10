@@ -122,12 +122,12 @@ public class TutorDAO implements BaseDAO<Tutor> {
         return tutors;
     }
 
-    public List<Tutor> findTutorsAvailableToday(Date today) throws SQLException {
-        List<Tutor> availableTutors = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String todayString = dateFormat.format(today);
-
-        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE available_date = ? AND scheduled = false";
+    public List<Tutor> findScheduledTutorsForToday(Date date) throws SQLException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        String todayString = dateFormat.format(date);
+        
+        List<Tutor> scheduledTutors = new ArrayList<>();
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE scheduled = true AND available_date = ?";
         
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -143,11 +143,11 @@ public class TutorDAO implements BaseDAO<Tutor> {
                     tutor.setLocation(rs.getString("location"));
                     tutor.setScheduled(rs.getBoolean("scheduled"));
                     
-                    availableTutors.add(tutor);
+                    scheduledTutors.add(tutor);
                 }
             }
         }
         
-        return availableTutors;
+        return scheduledTutors;
     }
 }

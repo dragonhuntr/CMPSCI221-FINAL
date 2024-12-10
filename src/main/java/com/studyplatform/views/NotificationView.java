@@ -17,6 +17,7 @@ public class NotificationView extends JPanel {
 
     public NotificationView(NotificationController notificationController) {
         this.notificationController = notificationController;
+        this.notificationController.registerView(this);
         initializeComponents();
     }
 
@@ -51,7 +52,7 @@ public class NotificationView extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Initial refresh
-        refreshNotificationTable();
+        refreshView();
     }
 
     private void markSelectedNotificationAsRead() {
@@ -61,46 +62,65 @@ public class NotificationView extends JPanel {
             Notification selectedNotification = notifications.get(selectedRow);
             
             notificationController.markNotificationAsRead(selectedNotification);
-            refreshNotificationTable();
+            refreshView();
         } else {
             JOptionPane.showMessageDialog(this, "No notification selected.");
         }
     }
 
     private void clearAllNotifications() {
-        int confirm = JOptionPane.showConfirmDialog(
-                this, 
-                "Are you sure you want to clear all notifications?", 
-                "Confirm Clear", 
-                JOptionPane.YES_NO_OPTION
+        int confirmDialog = JOptionPane.showConfirmDialog(
+            this, 
+            "Are you sure you want to clear all notifications?", 
+            "Confirm Clear", 
+            JOptionPane.YES_NO_OPTION
         );
-
-        if (confirm == JOptionPane.YES_OPTION) {
+        
+        if (confirmDialog == JOptionPane.YES_OPTION) {
             notificationController.clearAllNotifications();
-            refreshNotificationTable();
+            refreshView();
         }
     }
 
-    private void refreshNotificationTable() {
-        // Clear existing rows
-        notificationTableModel.setRowCount(0);
-
-        // Get all notifications
-        List<Notification> notifications = notificationController.getAllNotifications();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
-
-        // Populate table
-        for (Notification notification : notifications) {
-            notificationTableModel.addRow(new Object[]{
-                notification.getTitle(),
-                notification.getDescription(),
-                sdf.format(notification.getTimestamp()),
-                notification.isRead() ? "Read" : "Unread"
-            });
+    public void refreshView() {
+        try {
+            // Clear existing rows
+            notificationTableModel.setRowCount(0);
+            
+            // Get all non-deleted notifications
+            List<Notification> notifications = notificationController.getAllNotifications();
+            
+            // Date formatter
+            SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+            
+            // Track unread count
+            int unreadCount = 0;
+            
+            // Populate table
+            for (Notification notification : notifications) {
+                // Skip deleted notifications
+                if (notification.isDeleted()) continue;
+                
+                // Check if notification is unread
+                if (!notification.isRead()) {
+                    unreadCount++;
+                }
+                
+                // Add to table
+                notificationTableModel.addRow(new Object[]{
+                    notification.getTitle(),
+                    notification.getDescription(),
+                    sdf.format(notification.getTimestamp()),
+                    notification.isRead() ? "Read" : "Unread"
+                });
+            }
+            
+            // Update unread count label
+            unreadCountLabel.setText("Unread Notifications: " + unreadCount);
+            
+        } catch (Exception e) {
+            System.err.println("Error refreshing notifications: " + e.getMessage());
+            e.printStackTrace();
         }
-
-        // Update unread count
-        int unreadCount = notificationController.getUnreadNotificationCount();
-        unreadCountLabel.setText("Unread Notifications: " + unreadCount);
     }
 }
